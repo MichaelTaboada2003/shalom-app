@@ -7,6 +7,7 @@ interface BirthdayCanvasProps {
     title: string;
     message: string;
     logoSrc: string;
+    showLogo?: boolean;
     template: string;
     onPhotoClick: () => void;
     onTitleChange: (value: string) => void;
@@ -51,6 +52,7 @@ export const BirthdayCanvas = forwardRef<BirthdayCanvasRef, BirthdayCanvasProps>
         title,
         message,
         logoSrc,
+        showLogo = true,
         template,
         onPhotoClick,
         onTitleChange,
@@ -75,11 +77,13 @@ export const BirthdayCanvas = forwardRef<BirthdayCanvasRef, BirthdayCanvasProps>
                     {/* Inner frame */}
                     <div className="classic-frame">
                         {/* Header with logo */}
-                        <div className="classic-header">
-                            <div className="classic-logo">
-                                <img src={logoSrc} alt="Logo" />
+                        {showLogo && (
+                            <div className="classic-header">
+                                <div className="classic-logo">
+                                    <img src={logoSrc} alt="Logo" />
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Title */}
                         <div className="classic-title-area">
@@ -136,9 +140,11 @@ export const BirthdayCanvas = forwardRef<BirthdayCanvasRef, BirthdayCanvasProps>
                     {/* Content frame */}
                     <div className="roses-frame">
                         {/* Logo */}
-                        <div className="roses-logo">
-                            <img src={logoSrc} alt="Logo" />
-                        </div>
+                        {showLogo && (
+                            <div className="roses-logo">
+                                <img src={logoSrc} alt="Logo" />
+                            </div>
+                        )}
 
                         {/* Divider */}
                         <div className="roses-divider">✿ ❀ ✿</div>
@@ -221,9 +227,11 @@ export const BirthdayCanvas = forwardRef<BirthdayCanvasRef, BirthdayCanvasProps>
                         </div>
 
                         {/* Logo at bottom */}
-                        <div className="elegant-logo">
-                            <img src={logoSrc} alt="Logo" />
-                        </div>
+                        {showLogo && (
+                            <div className="elegant-logo">
+                                <img src={logoSrc} alt="Logo" />
+                            </div>
+                        )}
                     </div>
                 </div>
             );
