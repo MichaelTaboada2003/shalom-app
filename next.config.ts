@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [],
+    unoptimized: true, // For html-to-image compatibility
+  },
 };
 
 export default nextConfig;
