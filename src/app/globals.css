@@ -1748,52 +1748,29 @@ body {
 
 /* Cross Decoration (Divine Template) - Refined */
 /* Cross Decoration (Divine Template) - Refined Flat */
+/* Cross Decoration (Divine Template) - Refined Flat */
 .flyer-cross {
   position: absolute;
-  right: 60px;
-  bottom: 0px;
-  width: 180px;
+  right: -40px;
+  bottom: 40px;
+  width: 380px;
   height: 380px;
   z-index: 2;
   /* Combined shadow for the whole cross shape */
-  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.2));
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 1;
 }
 
-.cross-vertical {
-  width: 14px;
-  /* Más fina */
+.cross-svg {
+  width: 100%;
   height: 100%;
-  /* Metallic Gold Gradient - Smoother */
-  background: linear-gradient(90deg,
-      #967027 0%,
-      #cfb061 20%,
-      #fff7cc 50%,
-      #cfb061 80%,
-      #967027 100%);
-  position: absolute;
-  border-radius: 4px;
+  overflow: visible;
 }
 
-.cross-horizontal {
-  width: 110px;
-  /* Más corta */
-  height: 14px;
-  /* Más fina */
-  /* Metallic Gold Gradient - Smoother */
-  background: linear-gradient(180deg,
-      #967027 0%,
-      #cfb061 20%,
-      #fff7cc 50%,
-      #cfb061 80%,
-      #967027 100%);
-  position: absolute;
-  top: 30%;
-  border-radius: 4px;
-}
+/* Remove obsolete cross-vertical and cross-horizontal if they were here */
 
 /* Shared Input Behavior */
 .flyer-text-input:hover,
@@ -1884,6 +1861,10 @@ body {
   border-radius: 50px;
   padding: 10px 40px;
   margin-top: 20px;
+}
+
+.template-hope .flyer-datetime-block::before {
+  display: none;
 }
 
 .template-hope .date-text,
@@ -2018,19 +1999,42 @@ body {
   text-align: center;
 }
 
+/* Move Logo to Top-Left for Fire Template */
+/* Move Logo to Center-Right for Fire Template */
+.template-fire .flyer-logo {
+  top: 55%;
+  right: 40px;
+  left: auto;
+  width: 120px;
+  height: 120px;
+  transform: translateY(-50%);
+}
+
 .template-fire .flyer-location-area {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 10px;
-  border-radius: 8px;
-  max-width: 55%;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  max-width: 90%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
 }
 
 .template-fire .location-icon {
   color: #fbd38d;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  width: 32px;
+  height: 32px;
 }
 
 .template-fire .location-text {
   color: white;
+  width: 100%;
+  min-width: 250px;
+  text-align: left;
 }
 
 @media (max-width: 480px) {

@@ -127,8 +127,20 @@ export const FlyerCanvas = forwardRef<FlyerCanvasRef, FlyerCanvasProps>(
 
                 {/* Decorative Cross (Only for Divine) */}
                 <div className="flyer-cross">
-                    <div className="cross-vertical"></div>
-                    <div className="cross-horizontal"></div>
+                    <svg
+                        viewBox="0 0 200 200"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="cross-svg"
+                    >
+
+                        {/* Cross Shape - Thinner Latin Style */}
+                        <path
+                            d="M92 15 H108 V65 H155 V81 H108 V195 H92 V81 H45 V65 H92 V15 Z"
+                            fill="#C8A663"
+                            stroke="none"
+                            className="cross-shape"
+                        />
+                    </svg>
                 </div>
             </div>
         );
