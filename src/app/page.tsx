@@ -127,6 +127,14 @@ export default function Home() {
             });
           }
 
+          // Ocultar handles de Rnd en modo flyers
+          if (activeTab === 'flyers') {
+            const handles = element.querySelectorAll('.flyer-rnd > div:not(.flyer-quote-area):not(.flyer-datetime-block):not(.flyer-location-area)');
+            handles.forEach((el) => {
+              (el as HTMLElement).style.display = 'none';
+            });
+          }
+
           // Convertir inputs/textareas a divs para rendering correcto
           const replaceWithDiv = (
             input: HTMLInputElement | HTMLTextAreaElement | null,

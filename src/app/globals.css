@@ -1623,21 +1623,16 @@ body {
 }
 
 /* Content Grid Defaults */
-.flyer-content {
-  flex: 1;
-  padding: 0 40px 40px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 25px;
-  z-index: 3;
-  position: relative;
-}
+/* .flyer-content removed as items are now draggable */
 
 .flyer-quote-area {
-  max-width: 65%;
-  z-index: 5;
-  margin-bottom: 25px;
+  width: 100%;
+  height: 100%;
+}
+
+.flyer-rnd {
+  z-index: 20 !important;
+  /* Higher than everything else */
 }
 
 .quote-text {
@@ -1659,30 +1654,24 @@ body {
 .flyer-datetime-block {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
-  padding: 8px 15px;
+  padding: 10px 15px;
   /* Más compacto */
   border-radius: 12px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-left: 3px solid #d4af37;
+  border-right: 1px solid rgba(212, 175, 55, 0.3);
+  border-top: 1px solid rgba(212, 175, 55, 0.3);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: flex-start;
-  width: fit-content;
+  width: 100%;
+  height: 100%;
   box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
   /* Sombra más suave */
   gap: 2px;
   z-index: 5;
   position: relative;
-}
-
-.flyer-datetime-block::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 15%;
-  height: 70%;
-  width: 3px;
-  background: #d4af37;
-  border-radius: 0 4px 4px 0;
 }
 
 .date-text {
@@ -1696,7 +1685,7 @@ body {
   letter-spacing: 1px;
   background: transparent;
   border: none;
-  width: 120px;
+  width: 100%;
   padding: 0;
 }
 
@@ -1710,7 +1699,7 @@ body {
   text-align: left;
   background: transparent;
   border: none;
-  width: 150px;
+  width: 100%;
   padding: 0;
 }
 
@@ -1719,9 +1708,8 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 15px;
-  max-width: 60%;
-  z-index: 5;
+  width: 100%;
+  height: 100%;
 }
 
 .location-icon {
@@ -1843,8 +1831,9 @@ body {
 }
 
 .template-hope .flyer-quote-area {
-  max-width: 80%;
   text-align: center;
+  width: 100%;
+  height: 100%;
 }
 
 .template-hope .quote-text {
@@ -1857,10 +1846,14 @@ body {
   background: white;
   color: #2b6cb0;
   box-shadow: 0 10px 25px rgba(44, 82, 130, 0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
   border-radius: 50px;
-  padding: 10px 40px;
-  margin-top: 20px;
+  padding: 10px 20px;
+  width: 100%;
+  height: 100%;
 }
 
 .template-hope .flyer-datetime-block::before {
@@ -1871,12 +1864,10 @@ body {
 .template-hope .time-text {
   color: #2b6cb0;
   text-align: center;
+  width: 100%;
 }
 
-.template-hope .flyer-location-area {
-  max-width: 80%;
-  justify-content: center;
-}
+/* .template-hope .flyer-location-area removed as it uses defaults now */
 
 .template-hope .location-icon {
   color: #2b6cb0;
@@ -1969,11 +1960,12 @@ body {
 }
 
 .template-fire .flyer-quote-area {
-  max-width: 50%;
   background: rgba(0, 0, 0, 0.3);
   padding: 10px;
   border-radius: 8px;
   backdrop-filter: blur(5px);
+  width: 100%;
+  height: 100%;
 }
 
 .template-fire .quote-text {
@@ -1988,7 +1980,14 @@ body {
   border-radius: 4px;
   transform: skewX(-10deg);
   box-shadow: 5px 5px 0px #c53030;
-  padding: 15px 30px;
+  padding: 10px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
 }
 
 .template-fire .date-text,
@@ -1997,6 +1996,7 @@ body {
   transform: skewX(10deg);
   /* Counter skew text */
   text-align: center;
+  width: 100%;
 }
 
 /* Move Logo to Top-Left for Fire Template */
@@ -2014,11 +2014,9 @@ body {
   background: transparent;
   padding: 0;
   border-radius: 0;
-  max-width: 90%;
   display: flex;
   align-items: center;
   gap: 10px;
-  width: fit-content;
 }
 
 .template-fire .location-icon {
@@ -2033,7 +2031,6 @@ body {
 .template-fire .location-text {
   color: white;
   width: 100%;
-  min-width: 250px;
   text-align: left;
 }
 
