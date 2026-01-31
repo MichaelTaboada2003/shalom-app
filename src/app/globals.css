@@ -1607,12 +1607,8 @@ body {
 
 /* Logo Defaults */
 .flyer-logo {
-  position: absolute;
-  top: 35px;
-  right: 35px;
   width: 70px;
   height: 70px;
-  z-index: 10;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
 }
 
@@ -1802,11 +1798,9 @@ body {
 }
 
 /* Centered Header */
-.template-hope .flyer-header {
-  text-align: center;
-  padding-top: 50px;
-}
+/* .flyer-content removed */
 
+/* Header styles for Hope */
 .template-hope .flyer-title-main {
   color: #2b6cb0;
   font-family: 'Outfit', sans-serif;
@@ -1821,13 +1815,6 @@ body {
   font-weight: 800;
   font-size: 4rem;
   margin-left: 0;
-}
-
-/* Centered Content */
-.template-hope .flyer-content {
-  align-items: center;
-  text-align: center;
-  padding-bottom: 80px;
 }
 
 .template-hope .flyer-quote-area {
@@ -1925,11 +1912,8 @@ body {
 }
 
 /* Header - Left Aligned, overlapping shapes */
-.template-fire .flyer-header {
-  position: relative;
-  z-index: 5;
-  padding-left: 30px;
-}
+/* Header positioning handled by Rnd */
+/* .template-fire .flyer-header removed */
 
 .template-fire .flyer-title-main {
   color: white;
@@ -1952,12 +1936,8 @@ body {
   text-shadow: 2px 2px 0px #9c4221;
 }
 
-/* Content */
-.template-fire .flyer-content {
-  align-items: flex-start;
-  padding-left: 30px;
-  z-index: 5;
-}
+/* Content container removed */
+/* .template-fire .flyer-content removed */
 
 .template-fire .flyer-quote-area {
   background: rgba(0, 0, 0, 0.3);
@@ -2001,14 +1981,8 @@ body {
 
 /* Move Logo to Top-Left for Fire Template */
 /* Move Logo to Center-Right for Fire Template */
-.template-fire .flyer-logo {
-  top: 55%;
-  right: 40px;
-  left: auto;
-  width: 120px;
-  height: 120px;
-  transform: translateY(-50%);
-}
+/* Logo positioning handled by Rnd */
+/* .template-fire .flyer-logo removed */
 
 .template-fire .flyer-location-area {
   background: transparent;
