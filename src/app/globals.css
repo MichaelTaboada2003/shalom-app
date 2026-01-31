@@ -2086,6 +2086,13 @@ body {
     height: 540px;
   }
 
+  /* Flyer Canvas móvil */
+  .flyer-canvas {
+    transform: scale(0.65);
+    transform-origin: top center;
+    margin-bottom: -200px;
+  }
+
   /* Classic template móvil */
   .template-classic .title-text {
     font-size: 1.8rem;

@@ -129,8 +129,15 @@ export default function Home() {
 
           // Ocultar handles de Rnd en modo flyers
           if (activeTab === 'flyers') {
-            const handles = element.querySelectorAll('.flyer-rnd > div:not(.flyer-quote-area):not(.flyer-datetime-block):not(.flyer-location-area)');
+            // Ocultar los manejadores de redimensionamiento (divs que no son contenido principal)
+            const handles = element.querySelectorAll('.flyer-rnd > div:not(.flyer-quote-area):not(.flyer-datetime-block):not(.flyer-location-area):not(.flyer-header):not(.flyer-logo)');
             handles.forEach((el) => {
+              (el as HTMLElement).style.display = 'none';
+            });
+
+            // Ocultar icono de arrastre explícito
+            const dragIcons = element.querySelectorAll('.drag-handle-icon');
+            dragIcons.forEach((el) => {
               (el as HTMLElement).style.display = 'none';
             });
           }
