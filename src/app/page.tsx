@@ -3,31 +3,52 @@
 import React, { useState, useRef, useCallback } from 'react';
 import html2canvas from 'html2canvas';
 import BirthdayCanvas, { BirthdayCanvasRef } from '@/components/BirthdayCanvas';
+import FlyerCanvas from '@/components/FlyerCanvas';
 
-// Definición de templates disponibles
+// Definición de templates disponibles para Tarjetas
 export interface Template {
   id: string;
   name: string;
   preview: string;
 }
 
-const TEMPLATES: Template[] = [
+const CARD_TEMPLATES: Template[] = [
   { id: 'classic', name: 'Vintage', preview: '🎞️' },
   { id: 'modern', name: 'Floral', preview: '🌹' },
   { id: 'elegant', name: 'Elegante', preview: '💎' },
 ];
 
+// Definición de templates disponibles para Flyers
+const FLYER_TEMPLATES: Template[] = [
+  { id: 'divine', name: 'Divino', preview: '✝️' },
+  { id: 'hope', name: 'Esperanza', preview: '🕊️' },
+  { id: 'fire', name: 'Fuego', preview: '🔥' },
+];
+
 export default function Home() {
+  // Estado global de la app
+  const [activeTab, setActiveTab] = useState<'cards' | 'flyers'>('cards');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [showLogo, setShowLogo] = useState(true);
+
+  // Estados para Tarjetas
   const [photo, setPhoto] = useState<string | null>(null);
   const [title, setTitle] = useState('Feliz\ncumpleaños');
   const [message, setMessage] = useState(
     'Que Dios te acompañe y te bendiga, desde Shalom te deseamos un feliz cumpleaños 🎉'
   );
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('classic');
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [showLogo, setShowLogo] = useState(true);
+  const [selectedCardTemplate, setSelectedCardTemplate] = useState<string>('classic');
 
-  const canvasRef = useRef<BirthdayCanvasRef>(null);
+  // Estados para Flyers
+  const [flyerQuote, setFlyerQuote] = useState('"Donde hay dos o tres reunidos en mi nombre, allí estoy yo en medio de ellos"\n(Mateo 18,20)');
+  const [flyerDate, setFlyerDate] = useState('SÁBADO 24');
+  const [flyerTime, setFlyerTime] = useState('07:30 p.m.');
+  const [flyerLocation, setFlyerLocation] = useState('Lugar: Parroquia\nNuestra Sra de Lourdes');
+  const [selectedFlyerTemplate, setSelectedFlyerTemplate] = useState<string>('divine');
+
+  // Refs
+  const cardCanvasRef = useRef<BirthdayCanvasRef>(null);
+  const flyerCanvasRef = useRef<any>(null); // TODO: Type properly
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handlePhotoUpload = useCallback((file: File) => {
@@ -52,8 +73,29 @@ export default function Home() {
     [handlePhotoUpload]
   );
 
+  // Helper para navegar templates
+  const navigateTemplate = (direction: 'next' | 'prev', type: 'cards' | 'flyers') => {
+    const templates = type === 'cards' ? CARD_TEMPLATES : FLYER_TEMPLATES;
+    const currentId = type === 'cards' ? selectedCardTemplate : selectedFlyerTemplate;
+    const setTemplate = type === 'cards' ? setSelectedCardTemplate : setSelectedFlyerTemplate;
+
+    const currentIndex = templates.findIndex(t => t.id === currentId);
+    let newIndex;
+
+    if (direction === 'next') {
+      newIndex = currentIndex === templates.length - 1 ? 0 : currentIndex + 1;
+    } else {
+      newIndex = currentIndex === 0 ? templates.length - 1 : currentIndex - 1;
+    }
+
+    setTemplate(templates[newIndex].id);
+  };
+
   const handleDownload = useCallback(async () => {
+    // Determinar qué canvas descargar según la pestaña activa
+    const canvasRef = activeTab === 'cards' ? cardCanvasRef : flyerCanvasRef;
     const canvasElement = canvasRef.current?.getCanvasElement();
+
     if (!canvasElement) return;
 
     setIsDownloading(true);
@@ -63,29 +105,32 @@ export default function Home() {
       await new Promise(resolve => setTimeout(resolve, 200));
 
       const canvas = await html2canvas(canvasElement, {
-        scale: 4, // Alta resolución para mejor calidad
+        scale: 4, // Alta resolución
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
         logging: false,
-        imageTimeout: 0, // Sin timeout para imágenes
+        imageTimeout: 0,
         onclone: (_clonedDoc, element) => {
           element.style.borderRadius = '0';
 
-          // Mejorar renderizado de imágenes
           const allImages = element.querySelectorAll('img');
           allImages.forEach((img) => {
             img.style.imageRendering = 'high-quality';
           });
 
-          const overlays = element.querySelectorAll('.photo-overlay');
-          overlays.forEach((el) => {
-            (el as HTMLElement).style.display = 'none';
-          });
+          // Solo ocultar overlays si estamos en modo tarjetas
+          if (activeTab === 'cards') {
+            const overlays = element.querySelectorAll('.photo-overlay');
+            overlays.forEach((el) => {
+              (el as HTMLElement).style.display = 'none';
+            });
+          }
 
+          // Convertir inputs/textareas a divs para rendering correcto
           const replaceWithDiv = (
             input: HTMLInputElement | HTMLTextAreaElement | null,
-            styles: Partial<CSSStyleDeclaration>
+            styles: Partial<CSSStyleDeclaration> = {}
           ) => {
             if (!input || !input.parentNode) return;
 
@@ -108,34 +153,43 @@ export default function Home() {
             div.style.wordWrap = 'break-word';
             div.className = input.className;
 
+            // Copiar posición si es absolute
+            if (computed.position === 'absolute') {
+              div.style.position = 'absolute';
+              div.style.top = computed.top;
+              div.style.left = computed.left;
+              div.style.right = computed.right;
+              div.style.bottom = computed.bottom;
+              div.style.transform = computed.transform;
+            }
+
             input.parentNode.replaceChild(div, input);
           };
 
-          replaceWithDiv(
-            element.querySelector('.title-text') as HTMLTextAreaElement,
-            { fontFamily: "'Dancing Script', cursive" }
-          );
-
-          replaceWithDiv(
-            element.querySelector('.message-text') as HTMLTextAreaElement,
-            { fontFamily: "'Dancing Script', cursive" }
-          );
+          if (activeTab === 'cards') {
+            replaceWithDiv(element.querySelector('.title-text') as HTMLTextAreaElement, { fontFamily: "'Dancing Script', cursive" });
+            replaceWithDiv(element.querySelector('.message-text') as HTMLTextAreaElement, { fontFamily: "'Dancing Script', cursive" });
+          } else {
+            // Reemplazar inputs del flyer
+            const inputs = element.querySelectorAll('input, textarea');
+            inputs.forEach(input => replaceWithDiv(input as HTMLInputElement));
+          }
         }
       });
 
       const dataUrl = canvas.toDataURL('image/png', 1.0);
-
       const link = document.createElement('a');
-      link.download = `feliz-cumpleaños-shalom-${Date.now()}.png`;
+      const prefix = activeTab === 'cards' ? 'feliz-cumpleaños' : 'flyer-evento';
+      link.download = `${prefix}-shalom-${Date.now()}.png`;
       link.href = dataUrl;
       link.click();
     } catch (error) {
-      console.error('Error al descargar la imagen:', error);
+      console.error('Error al descargar:', error);
       alert('Error al generar la imagen. Por favor, intenta de nuevo.');
     } finally {
       setIsDownloading(false);
     }
-  }, []);
+  }, [activeTab]);
 
   return (
     <main className="app-container">
@@ -148,77 +202,152 @@ export default function Home() {
 
       {/* Header */}
       <header className="app-header">
-        <h1>✨ Tarjetas de Cumpleaños</h1>
-        <p>Haz clic en cualquier texto para editarlo</p>
+        <h1>✨ Generador de Templates</h1>
+        <p>Crea tarjetas de cumpleaños y flyers para tus eventos</p>
       </header>
 
-      {/* Template Navigation */}
-      <div className="template-nav">
+      {/* Tool Navigation */}
+      <div className="tool-selector">
         <button
-          className="nav-arrow nav-prev"
-          onClick={() => {
-            const currentIndex = TEMPLATES.findIndex(t => t.id === selectedTemplate);
-            const prevIndex = currentIndex === 0 ? TEMPLATES.length - 1 : currentIndex - 1;
-            setSelectedTemplate(TEMPLATES[prevIndex].id);
-          }}
-          type="button"
-          aria-label="Plantilla anterior"
+          className={`tool-btn ${activeTab === 'cards' ? 'active' : ''}`}
+          onClick={() => setActiveTab('cards')}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
+          🎂 Tarjetas
         </button>
-
-        <div className="template-indicator">
-          <span className="template-current-name">
-            {TEMPLATES.find(t => t.id === selectedTemplate)?.preview}{' '}
-            {TEMPLATES.find(t => t.id === selectedTemplate)?.name}
-          </span>
-          <div className="template-dots">
-            {TEMPLATES.map((template) => (
-              <span
-                key={template.id}
-                className={`dot ${selectedTemplate === template.id ? 'active' : ''}`}
-              />
-            ))}
-          </div>
-        </div>
-
         <button
-          className="nav-arrow nav-next"
-          onClick={() => {
-            const currentIndex = TEMPLATES.findIndex(t => t.id === selectedTemplate);
-            const nextIndex = currentIndex === TEMPLATES.length - 1 ? 0 : currentIndex + 1;
-            setSelectedTemplate(TEMPLATES[nextIndex].id);
-          }}
-          type="button"
-          aria-label="Siguiente plantilla"
+          className={`tool-btn ${activeTab === 'flyers' ? 'active' : ''}`}
+          onClick={() => setActiveTab('flyers')}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-          </svg>
+          📢 Flyers
         </button>
       </div>
 
       {/* Editor Container */}
       <div className="editor-container">
-        {/* Canvas */}
-        <div className="canvas-wrapper">
-          <BirthdayCanvas
-            ref={canvasRef}
-            photo={photo}
-            title={title}
-            message={message}
-            logoSrc="/shalom-logo.png"
-            showLogo={showLogo}
-            template={selectedTemplate}
-            onPhotoClick={handlePhotoClick}
-            onTitleChange={setTitle}
-            onMessageChange={setMessage}
-          />
-        </div>
 
-        {/* Hidden file input */}
+        {/* VIEW: CARDS */}
+        {activeTab === 'cards' && (
+          <>
+            {/* Template Navigation */}
+            <div className="template-nav">
+              <button
+                className="nav-arrow nav-prev"
+                onClick={() => navigateTemplate('prev', 'cards')}
+                type="button"
+                aria-label="Plantilla anterior"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+
+              <div className="template-indicator">
+                <span className="template-current-name">
+                  {CARD_TEMPLATES.find(t => t.id === selectedCardTemplate)?.preview}{' '}
+                  {CARD_TEMPLATES.find(t => t.id === selectedCardTemplate)?.name}
+                </span>
+                <div className="template-dots">
+                  {CARD_TEMPLATES.map((template) => (
+                    <span
+                      key={template.id}
+                      className={`dot ${selectedCardTemplate === template.id ? 'active' : ''}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <button
+                className="nav-arrow nav-next"
+                onClick={() => navigateTemplate('next', 'cards')}
+                type="button"
+                aria-label="Siguiente plantilla"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="canvas-wrapper">
+              <BirthdayCanvas
+                ref={cardCanvasRef}
+                photo={photo}
+                title={title}
+                message={message}
+                logoSrc="/shalom-logo.png"
+                showLogo={showLogo}
+                template={selectedCardTemplate}
+                onPhotoClick={handlePhotoClick}
+                onTitleChange={setTitle}
+                onMessageChange={setMessage}
+              />
+            </div>
+          </>
+        )}
+
+        {/* VIEW: FLYERS */}
+        {activeTab === 'flyers' && (
+          <>
+            {/* Template Navigation for Flyers */}
+            <div className="template-nav">
+              <button
+                className="nav-arrow nav-prev"
+                onClick={() => navigateTemplate('prev', 'flyers')}
+                type="button"
+                aria-label="Plantilla anterior"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+
+              <div className="template-indicator">
+                <span className="template-current-name">
+                  {FLYER_TEMPLATES.find(t => t.id === selectedFlyerTemplate)?.preview}{' '}
+                  {FLYER_TEMPLATES.find(t => t.id === selectedFlyerTemplate)?.name}
+                </span>
+                <div className="template-dots">
+                  {FLYER_TEMPLATES.map((template) => (
+                    <span
+                      key={template.id}
+                      className={`dot ${selectedFlyerTemplate === template.id ? 'active' : ''}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <button
+                className="nav-arrow nav-next"
+                onClick={() => navigateTemplate('next', 'flyers')}
+                type="button"
+                aria-label="Siguiente plantilla"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="canvas-wrapper">
+              <FlyerCanvas
+                ref={flyerCanvasRef}
+                bibleQuote={flyerQuote}
+                onBibleQuoteChange={setFlyerQuote}
+                date={flyerDate}
+                onDateChange={setFlyerDate}
+                time={flyerTime}
+                onTimeChange={setFlyerTime}
+                location={flyerLocation}
+                onLocationChange={setFlyerLocation}
+                logoSrc="/shalom-logo.png"
+                showLogo={showLogo}
+                template={selectedFlyerTemplate}
+              />
+            </div>
+          </>
+        )}
+
+        {/* Hidden file input (Shared) */}
         <input
           ref={fileInputRef}
           type="file"
@@ -227,7 +356,7 @@ export default function Home() {
           className="hidden-input"
         />
 
-        {/* Floating Toolbar */}
+        {/* Floating Toolbar (Shared) */}
         <div className="floating-toolbar">
           <button
             className="toolbar-btn secondary"
@@ -276,7 +405,7 @@ export default function Home() {
         </div>
 
         <p className="hint-text">
-          💡 Tip: Haz clic directamente en los textos de la tarjeta para editarlos
+          💡 Tip: Haz clic directamente en los textos para editarlos
         </p>
       </div>
     </main>

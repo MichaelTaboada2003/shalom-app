@@ -1510,9 +1510,529 @@ body {
   object-fit: contain;
 }
 
+/* Tool Selector */
+.tool-selector {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.tool-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--text-main);
+}
+
+.tool-btn.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+.tool-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.3);
+  color: var(--text-main);
+}
+
 /* ============================================
-   RESPONSIVE - MÓVILES
+   FLYER CANVAS
    ============================================ */
+.flyer-canvas {
+  position: relative;
+  width: 500px;
+  height: 600px;
+  background: radial-gradient(circle at top left, #fffbf2, #fdfaf5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: #4a3b2a;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* Base Decoration (Circle) - Divine uses this */
+.flyer-circle-bg {
+  position: absolute;
+  top: 30%;
+  right: -120px;
+  width: 450px;
+  height: 450px;
+  background: linear-gradient(135deg, #d4af37 0%, #8d6e63 100%);
+  border-radius: 50%;
+  opacity: 0.15;
+  z-index: 1;
+  mix-blend-mode: multiply;
+}
+
+/* Header Defaults */
+.flyer-header {
+  padding: 45px 40px 10px;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.flyer-title-main {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.8rem;
+  line-height: 1;
+  letter-spacing: 2px;
+  color: #8a6d3b;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.flyer-title-sub {
+  font-family: 'Playfair Display', serif;
+  font-size: 4.2rem;
+  line-height: 0.9;
+  font-weight: 700;
+  color: #3e2723;
+  text-transform: uppercase;
+  letter-spacing: -1px;
+  margin-top: 5px;
+}
+
+/* Logo Defaults */
+.flyer-logo {
+  position: absolute;
+  top: 35px;
+  right: 35px;
+  width: 70px;
+  height: 70px;
+  z-index: 10;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.flyer-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Content Grid Defaults */
+.flyer-content {
+  flex: 1;
+  padding: 0 40px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 25px;
+  z-index: 3;
+  position: relative;
+}
+
+.flyer-quote-area {
+  max-width: 65%;
+  z-index: 5;
+  margin-bottom: 25px;
+}
+
+.quote-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  color: #5d4037;
+  font-weight: 500;
+  font-style: italic;
+  background: transparent;
+  border: 1px dashed transparent;
+  width: 100%;
+  resize: none;
+  outline: none;
+}
+
+/* Date Block Defaults (Glassmorphism Style) */
+/* Date Block Defaults (Glassmorphism Style) */
+.flyer-datetime-block {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  padding: 8px 15px;
+  /* Más compacto */
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: fit-content;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
+  /* Sombra más suave */
+  gap: 2px;
+  z-index: 5;
+  position: relative;
+}
+
+.flyer-datetime-block::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  height: 70%;
+  width: 3px;
+  background: #d4af37;
+  border-radius: 0 4px 4px 0;
+}
+
+.date-text {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  color: #8a6d3b;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  /* Fuente más pequeña */
+  text-align: left;
+  letter-spacing: 1px;
+  background: transparent;
+  border: none;
+  width: 120px;
+  padding: 0;
+}
+
+.time-text {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  color: #3e2723;
+  font-size: 1.5rem;
+  /* Fuente más pequeña */
+  line-height: 1;
+  text-align: left;
+  background: transparent;
+  border: none;
+  width: 150px;
+  padding: 0;
+}
+
+/* Location Defaults */
+.flyer-location-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 15px;
+  max-width: 60%;
+  z-index: 5;
+}
+
+.location-icon {
+  width: 36px;
+  height: 36px;
+  color: #8a6d3b;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  padding: 6px;
+  flex-shrink: 0;
+}
+
+.location-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  color: #4a3b2a;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  resize: none;
+  outline: none;
+  width: 100%;
+}
+
+/* Cross Decoration (Divine Template) - Refined */
+/* Cross Decoration (Divine Template) - Refined Flat */
+.flyer-cross {
+  position: absolute;
+  right: 60px;
+  bottom: 0px;
+  width: 180px;
+  height: 380px;
+  z-index: 2;
+  /* Combined shadow for the whole cross shape */
+  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+}
+
+.cross-vertical {
+  width: 14px;
+  /* Más fina */
+  height: 100%;
+  /* Metallic Gold Gradient - Smoother */
+  background: linear-gradient(90deg,
+      #967027 0%,
+      #cfb061 20%,
+      #fff7cc 50%,
+      #cfb061 80%,
+      #967027 100%);
+  position: absolute;
+  border-radius: 4px;
+}
+
+.cross-horizontal {
+  width: 110px;
+  /* Más corta */
+  height: 14px;
+  /* Más fina */
+  /* Metallic Gold Gradient - Smoother */
+  background: linear-gradient(180deg,
+      #967027 0%,
+      #cfb061 20%,
+      #fff7cc 50%,
+      #cfb061 80%,
+      #967027 100%);
+  position: absolute;
+  top: 30%;
+  border-radius: 4px;
+}
+
+/* Shared Input Behavior */
+.flyer-text-input:hover,
+.flyer-text-input:focus {
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+/* ============================================
+   TEMPLATE VARIANTS
+   ============================================ */
+
+/* --- TEMPLATE: HOPE (Blue/Silver, Curves, Centered) --- */
+.template-hope {
+  background: linear-gradient(180deg, #f0f9ff 0%, #e6fffa 100%);
+  color: #2c5282;
+}
+
+/* Hide Divine elements */
+.template-hope .flyer-circle-bg {
+  display: none;
+}
+
+.template-hope .flyer-cross {
+  display: none;
+}
+
+/* Hope Wave Decoration */
+.template-hope .flyer-wave-bg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background: linear-gradient(180deg, #90cdf4 0%, #63b3ed 100%);
+  border-top-left-radius: 100% 50%;
+  border-top-right-radius: 100% 50%;
+  z-index: 1;
+  opacity: 0.8;
+}
+
+/* Centered Header */
+.template-hope .flyer-header {
+  text-align: center;
+  padding-top: 50px;
+}
+
+.template-hope .flyer-title-main {
+  color: #2b6cb0;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  letter-spacing: 2px;
+  font-size: 2.5rem;
+}
+
+.template-hope .flyer-title-sub {
+  color: #2c5282;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 4rem;
+  margin-left: 0;
+}
+
+/* Centered Content */
+.template-hope .flyer-content {
+  align-items: center;
+  text-align: center;
+  padding-bottom: 80px;
+}
+
+.template-hope .flyer-quote-area {
+  max-width: 80%;
+  text-align: center;
+}
+
+.template-hope .quote-text {
+  text-align: center;
+  color: #2a4365;
+  font-style: italic;
+}
+
+.template-hope .flyer-datetime-block {
+  background: white;
+  color: #2b6cb0;
+  box-shadow: 0 10px 25px rgba(44, 82, 130, 0.15);
+  align-items: center;
+  border-radius: 50px;
+  padding: 10px 40px;
+  margin-top: 20px;
+}
+
+.template-hope .date-text,
+.template-hope .time-text {
+  color: #2b6cb0;
+  text-align: center;
+}
+
+.template-hope .flyer-location-area {
+  max-width: 80%;
+  justify-content: center;
+}
+
+.template-hope .location-icon {
+  color: #2b6cb0;
+  background: white;
+  border-radius: 50%;
+  padding: 5px;
+  width: 40px;
+  height: 40px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.template-hope .location-text {
+  color: #2a4365;
+  text-align: left;
+}
+
+
+/* --- TEMPLATE: FIRE (Red/Orange, Angled, Bold) --- */
+.template-fire {
+  background: #1a202c;
+  /* Dark background */
+  color: white;
+}
+
+/* Hide Divine elements */
+.template-fire .flyer-circle-bg {
+  display: none;
+}
+
+.template-fire .flyer-cross {
+  display: none;
+}
+
+/* Fire Shapes */
+.template-fire .flyer-fire-bg-1 {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 70%;
+  height: 100%;
+  background: linear-gradient(115deg, #c53030 0%, #dd6b20 100%);
+  clip-path: polygon(20% 0%, 100% 0, 100% 100%, 0% 100%);
+  z-index: 1;
+}
+
+.template-fire .flyer-fire-bg-2 {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 80%;
+  height: 100%;
+  background: #742a2a;
+  clip-path: polygon(30% 0%, 100% 0, 100% 100%, 10% 100%);
+  z-index: 0;
+}
+
+/* Header - Left Aligned, overlapping shapes */
+.template-fire .flyer-header {
+  position: relative;
+  z-index: 5;
+  padding-left: 30px;
+}
+
+.template-fire .flyer-title-main {
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-style: italic;
+  font-size: 3.5rem;
+  text-shadow: 2px 2px 0px #742a2a;
+}
+
+.template-fire .flyer-title-sub {
+  color: #fbd38d;
+  /* Amaillo claro */
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  font-size: 5rem;
+  text-transform: uppercase;
+  font-style: italic;
+  margin-left: 0;
+  text-shadow: 2px 2px 0px #9c4221;
+}
+
+/* Content */
+.template-fire .flyer-content {
+  align-items: flex-start;
+  padding-left: 30px;
+  z-index: 5;
+}
+
+.template-fire .flyer-quote-area {
+  max-width: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
+}
+
+.template-fire .quote-text {
+  color: #fed7d7;
+  font-weight: 400;
+  font-style: italic;
+  text-align: left;
+}
+
+.template-fire .flyer-datetime-block {
+  background: white;
+  border-radius: 4px;
+  transform: skewX(-10deg);
+  box-shadow: 5px 5px 0px #c53030;
+  padding: 15px 30px;
+}
+
+.template-fire .date-text,
+.template-fire .time-text {
+  color: #c53030;
+  transform: skewX(10deg);
+  /* Counter skew text */
+  text-align: center;
+}
+
+.template-fire .flyer-location-area {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  border-radius: 8px;
+  max-width: 55%;
+}
+
+.template-fire .location-icon {
+  color: #fbd38d;
+}
+
+.template-fire .location-text {
+  color: white;
+}
+
 @media (max-width: 480px) {
   .app-container {
     padding: 1rem 0.5rem;
