@@ -283,7 +283,8 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="canvas-wrapper">
+
+            <div className={`canvas-wrapper ${activeTab}-mode`}>
               <BirthdayCanvas
                 ref={cardCanvasRef}
                 photo={photo}
@@ -343,7 +344,7 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="canvas-wrapper">
+            <div className={`canvas-wrapper ${activeTab}-mode`}>
               <FlyerCanvas
                 ref={flyerCanvasRef}
                 bibleQuote={flyerQuote}
@@ -423,6 +424,6 @@ export default function Home() {
           💡 Tip: Haz clic directamente en los textos para editarlos
         </p>
       </div>
-    </main>
+    </main >
   );
 }

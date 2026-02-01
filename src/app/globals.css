@@ -2060,22 +2060,38 @@ body {
     height: 540px;
   }
 
-  /* Flyer Canvas móvil - Tablets/Large Phones */
-  .flyer-canvas {
-    transform: scale(0.85);
-    transform-origin: top center;
-    margin-bottom: -90px;
-    margin-left: auto;
-    margin-right: auto;
+  /* Flyer Canvas móvil - Wrapper/Scale Logic */
+  .canvas-wrapper.flyers-mode {
+    width: 425px;
+    /* 500 * 0.85 */
+    height: 510px;
+    /* 600 * 0.85 */
+    margin: 0 auto;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    /* Ensure shadow is on wrapper */
   }
 
+  .flyer-canvas {
+    transform: scale(0.85);
+    transform-origin: top left;
+    margin: 0;
+  }
 
 
   /* Standard Mobile Phones */
   @media (max-width: 480px) {
+    .canvas-wrapper.flyers-mode {
+      width: 310px;
+      /* 500 * 0.62 */
+      height: 372px;
+      /* 600 * 0.62 */
+    }
+
     .flyer-canvas {
-      transform: scale(0.65);
-      margin-bottom: -210px;
+      transform: scale(0.62);
+      transform-origin: top left;
+      margin: 0;
     }
   }
 
