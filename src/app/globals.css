@@ -2008,7 +2008,7 @@ body {
   text-align: left;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 580px) {
   .app-container {
     padding: 1rem 0.5rem;
   }
@@ -2060,13 +2060,23 @@ body {
     height: 540px;
   }
 
-  /* Flyer Canvas móvil */
+  /* Flyer Canvas móvil - Tablets/Large Phones */
   .flyer-canvas {
-    transform: scale(0.60);
+    transform: scale(0.85);
     transform-origin: top center;
-    margin-bottom: -240px;
+    margin-bottom: -90px;
     margin-left: auto;
     margin-right: auto;
+  }
+
+
+
+  /* Standard Mobile Phones */
+  @media (max-width: 480px) {
+    .flyer-canvas {
+      transform: scale(0.65);
+      margin-bottom: -210px;
+    }
   }
 
   /* Classic template móvil */
