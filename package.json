@@ -9,15 +9,23 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "html-to-image": "^1.11.13",
-    "html2canvas": "^1.4.1",
+    "@neondatabase/serverless": "^1.1.0",
+    "@tailwindcss/postcss": "^4.2.4",
+    "bcryptjs": "^3.0.3",
+    "framer-motion": "^12.38.0",
+    "jsonwebtoken": "^9.0.3",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "lucide-react": "^1.14.0",
     "next": "16.1.6",
+    "postcss": "^8.5.12",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-dropzone": "^14.4.0",
-    "react-rnd": "^10.5.2"
+    "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
