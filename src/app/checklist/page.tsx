@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Trash2, ArrowLeft, Circle, CheckCircle2,
 } from 'lucide-react';
+import { ChecklistDetailView } from './ChecklistDetailView';
 
 interface ChecklistItem {
   id: string;
@@ -113,85 +114,7 @@ export default function ChecklistPage() {
 
   // ─── Detail View ───
   if (activeList) {
-    return (
-      <div className="px-4 pt-4 pb-4 max-w-lg mx-auto">
-        <motion.header initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 mb-5">
-          <button onClick={() => { setActiveList(null); fetchChecklists(); }} className="flex items-center justify-center w-9 h-9 rounded-xl bg-bg-card hover:bg-bg-card-hover border border-border-subtle transition-all active:scale-95">
-            <ArrowLeft size={18} className="text-text-secondary" />
-          </button>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold tracking-tight truncate">{activeList.emoji} {activeList.title}</h1>
-          </div>
-        </motion.header>
-
-        {/* Progress */}
-        {total > 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-5">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-text-muted font-medium">{completed} de {total} completados</span>
-              <span className="text-xs font-bold text-accent">{Math.round(pct)}%</span>
-            </div>
-            <div className="h-2 rounded-full bg-bg-elevated overflow-hidden">
-              <motion.div
-                className="h-full rounded-full bg-gradient-to-r from-accent to-success"
-                initial={{ width: 0 }}
-                animate={{ width: `${pct}%` }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-              />
-            </div>
-          </motion.div>
-        )}
-
-        {/* Add item */}
-        <div className="flex gap-2 mb-4">
-          <input
-            type="text"
-            value={newItemText}
-            onChange={e => setNewItemText(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addItem()}
-            placeholder="Agregar elemento..."
-            autoFocus
-            className="flex-1 h-11 px-4 rounded-xl bg-bg-card border border-border-subtle text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent transition-colors"
-          />
-          <button onClick={addItem} disabled={!newItemText.trim()} className="w-11 h-11 rounded-xl bg-accent text-white flex items-center justify-center disabled:opacity-40 hover:bg-accent/90 transition-all active:scale-95 shrink-0">
-            <Plus size={20} />
-          </button>
-        </div>
-
-        {/* Items */}
-        <ul className="flex flex-col gap-1.5">
-          <AnimatePresence>
-            {activeList.items.map(item => (
-              <motion.li
-                key={item.id}
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 12 }}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${item.completed ? 'bg-bg-card/50 border-border-subtle opacity-60' : 'bg-bg-card border-border-subtle'}`}
-              >
-                <button onClick={() => toggleItem(item)} className="shrink-0 transition-transform active:scale-90">
-                  {item.completed
-                    ? <CheckCircle2 size={22} className="text-success" />
-                    : <Circle size={22} className="text-text-muted" />
-                  }
-                </button>
-                <span className={`flex-1 text-sm ${item.completed ? 'line-through text-text-muted' : 'text-text-primary'}`}>{item.text}</span>
-                <button onClick={() => deleteItem(item.id)} className="shrink-0 p-1 rounded-lg text-text-muted hover:text-danger hover:bg-danger-soft transition-colors">
-                  <Trash2 size={15} />
-                </button>
-              </motion.li>
-            ))}
-          </AnimatePresence>
-        </ul>
-
-        {total === 0 && (
-          <div className="flex flex-col items-center gap-2 py-16 text-center">
-            <span className="text-4xl">📝</span>
-            <p className="text-sm text-text-secondary">Agrega elementos a tu lista</p>
-          </div>
-        )}
-      </div>
-    );
+    return <ChecklistDetailView activeList={activeList} setActiveList={setActiveList} fetchChecklists={fetchChecklists} />;
   }
 
   // ─── List View ───

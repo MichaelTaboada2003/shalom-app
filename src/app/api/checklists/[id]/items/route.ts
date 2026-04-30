@@ -6,11 +6,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   try {
     await requireAuth();
     const { id } = await params;
-    const { text } = await request.json();
+    const { text, parent_id } = await request.json();
     if (!text?.trim()) return NextResponse.json({ error: 'Text is required' }, { status: 400 });
     const sql = getDb();
-    const posResult = await sql`SELECT COALESCE(MAX(position), -1) + 1 AS next_pos FROM checklist_items WHERE checklist_id = ${id}`;
-    const rows = await sql`INSERT INTO checklist_items (checklist_id, text, position) VALUES (${id}, ${text.trim()}, ${posResult[0].next_pos}) RETURNING *`;
+    
+    let posResult;
+    if (parent_id) {
+      posResult = await sql`SELECT COALESCE(MAX(position), -1) + 1 AS next_pos FROM checklist_items WHERE checklist_id = ${id} AND parent_id = ${parent_id}`;
+    } else {
+      posResult = await sql`SELECT COALESCE(MAX(position), -1) + 1 AS next_pos FROM checklist_items WHERE checklist_id = ${id} AND parent_id IS NULL`;
+    }
+    
+    const rows = await sql`INSERT INTO checklist_items (checklist_id, text, position, parent_id) VALUES (${id}, ${text.trim()}, ${posResult[0].next_pos}, ${parent_id || null}) RETURNING *`;
     return NextResponse.json(rows[0], { status: 201 });
   } catch (err) {
     if (err instanceof AuthError) return NextResponse.json({ error: err.message }, { status: err.status });

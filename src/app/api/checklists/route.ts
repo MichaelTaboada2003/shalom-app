@@ -12,7 +12,7 @@ export async function GET() {
         COUNT(ci.id)::int AS total_items,
         COUNT(ci.id) FILTER (WHERE ci.completed)::int AS completed_items
       FROM checklists c
-      LEFT JOIN checklist_items ci ON ci.checklist_id = c.id
+      LEFT JOIN checklist_items ci ON ci.checklist_id = c.id AND ci.parent_id IS NULL
       GROUP BY c.id
       ORDER BY c.created_at DESC
     `;
