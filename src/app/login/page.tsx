@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import logoShalom from '@/app/assets/logo-shalom.png';
 import { motion } from 'framer-motion';
 import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
@@ -35,7 +37,8 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-sm"
       >
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 flex flex-col items-center">
+          <Image src={logoShalom} alt="Shalom Logo" width={80} height={80} className="mb-4 object-contain drop-shadow-lg" />
           <h1 className="text-3xl font-extrabold tracking-tight">Shalom</h1>
           <p className="text-text-secondary text-sm mt-1">Inicia sesión para continuar</p>
         </div>
