@@ -9,7 +9,7 @@ interface ReminderRow {
   subject: string | null;
   message: string | null;
   member_name: string;
-  birth_date: string;
+  birth_date: string | Date;
   recipient_email: string;
   recipient_name: string | null;
 }
@@ -30,6 +30,10 @@ function getBearerToken(request: NextRequest): string | null {
   return value?.match(/^Bearer\s+(.+)$/i)?.[1] ?? null;
 }
 
+function normalizeDatabaseDate(value: string | Date): string {
+  return value instanceof Date ? value.toISOString().slice(0, 10) : value.slice(0, 10);
+}
+
 function birthdayYearScheduledFor(birthDate: string, daysBefore: number, today: Date): number | null {
   const todayKey = dateKey(today);
   const currentYear = today.getUTCFullYear();
@@ -46,12 +50,13 @@ async function dispatch(request: NextRequest) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
-  const resendKey = process.env.RESEND_API_KEY;
+  const brevoKey = process.env.BREVO_API_KEY;
   const from = process.env.REMINDER_FROM_EMAIL;
-  if (!resendKey || !from) {
+  const fromName = process.env.REMINDER_FROM_NAME || 'Shalom App';
+  if (!brevoKey || !from) {
     return NextResponse.json({
       error: 'El envío de correo no está configurado',
-      required: ['RESEND_API_KEY', 'REMINDER_FROM_EMAIL'],
+      required: ['BREVO_API_KEY', 'REMINDER_FROM_EMAIL'],
     }, { status: 503 });
   }
 
@@ -77,7 +82,7 @@ async function dispatch(request: NextRequest) {
         subject: row.subject,
         message: row.message,
         memberName: row.member_name,
-        birthDate: row.birth_date,
+        birthDate: normalizeDatabaseDate(row.birth_date),
         recipients: [],
       };
       existing.recipients.push({ email: row.recipient_email, name: row.recipient_name });
@@ -97,7 +102,15 @@ async function dispatch(request: NextRequest) {
 
     for (const { reminder, birthdayYear } of due) {
       const birthday = birthdayDateForYear(reminder.birthDate, birthdayYear);
-      const birthdayLabel = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(birthday);
+      const birthdayLabel = new Intl.DateTimeFormat('es-CO', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
+      }).format(birthday);
+      const advanceLabel = reminder.daysBefore === 0
+        ? 'La celebración es hoy.'
+        : `Este recordatorio fue programado con ${reminder.daysBefore} ${reminder.daysBefore === 1 ? 'día' : 'días'} de anticipación.`;
 
       for (const recipient of reminder.recipients) {
         const claim = await sql`
@@ -112,28 +125,60 @@ async function dispatch(request: NextRequest) {
         }
 
         const greeting = recipient.name ? `Hola, ${escapeHtml(recipient.name)}.` : 'Hola.';
-        const subject = reminder.subject || `Recordatorio: cumpleaños de ${reminder.memberName}`;
-        const body = reminder.message
-          ? `${escapeHtml(reminder.message).replace(/\n/g, '<br />')}`
-          : `El cumpleaños de <strong>${escapeHtml(reminder.memberName)}</strong> es el ${birthdayLabel}.`;
-        const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#28213d"><p>${greeting}</p><p>${body}</p><p style="color:#766b8f;font-size:13px">Recordatorio creado en Shalom App.</p></div>`;
+        const memberName = escapeHtml(reminder.memberName);
+        const subject = reminder.subject || `Recordatorio: ${reminder.memberName} cumple el ${birthdayLabel}`;
+        const customMessage = reminder.message
+          ? `<div style="margin:20px 0 0;padding:16px 18px;border-radius:12px;background:#f7f5ff;color:#4a4065;font-size:15px;line-height:1.65">${escapeHtml(reminder.message).replace(/\n/g, '<br />')}</div>`
+          : '';
+        const html = `
+          <div style="margin:0;padding:32px 16px;background:#f4f2f8;font-family:Arial,sans-serif;color:#28213d">
+            <div style="max-width:600px;margin:0 auto;overflow:hidden;border:1px solid #e6e1ef;border-radius:20px;background:#ffffff;box-shadow:0 12px 28px rgba(47,34,82,0.08)">
+              <div style="padding:24px 28px;background:linear-gradient(135deg,#5f3dc4,#8566dc);color:#ffffff">
+                <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;opacity:0.86">Shalom · Comunidad</p>
+                <h1 style="margin:0;font-size:27px;line-height:1.2">Recordatorio de cumpleaños</h1>
+              </div>
+              <div style="padding:28px">
+                <p style="margin:0 0 14px;font-size:16px;line-height:1.6">${greeting}</p>
+                <p style="margin:0;font-size:16px;line-height:1.6">Te recordamos que el cumpleaños de <strong>${memberName}</strong> se celebra el <strong>${birthdayLabel}</strong>.</p>
+                ${customMessage}
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:22px 0 0;border:1px solid #e9e4f1;border-radius:14px;background:#fbfaff;border-collapse:separate;border-spacing:0;overflow:hidden">
+                  <tr>
+                    <td style="padding:14px 16px;border-bottom:1px solid #e9e4f1;color:#776d8b;font-size:13px">Persona que cumple</td>
+                    <td style="padding:14px 16px;border-bottom:1px solid #e9e4f1;color:#28213d;font-size:15px;font-weight:700;text-align:right">${memberName}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:14px 16px;color:#776d8b;font-size:13px">Fecha de celebración</td>
+                    <td style="padding:14px 16px;color:#28213d;font-size:15px;font-weight:700;text-align:right">${birthdayLabel}</td>
+                  </tr>
+                </table>
+                <p style="margin:18px 0 0;color:#625776;font-size:14px;line-height:1.55">${advanceLabel}</p>
+              </div>
+              <div style="padding:16px 28px;border-top:1px solid #eeeaf4;color:#857b99;font-size:12px;line-height:1.5">Este recordatorio fue creado desde Shalom App.</div>
+            </div>
+          </div>`;
 
         try {
-          const response = await fetch('https://api.resend.com/emails', {
+          const response = await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
             headers: {
-              Authorization: `Bearer ${resendKey}`,
+              accept: 'application/json',
+              'api-key': brevoKey,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ from, to: [recipient.email], subject, html }),
+            body: JSON.stringify({
+              sender: { name: fromName, email: from },
+              to: [{ email: recipient.email, ...(recipient.name ? { name: recipient.name } : {}) }],
+              subject,
+              htmlContent: html,
+            }),
             cache: 'no-store',
           });
-          const result = await response.json().catch(() => ({})) as { id?: string; message?: string; name?: string };
-          if (!response.ok) throw new Error(result.message || result.name || `Resend respondió ${response.status}`);
+          const result = await response.json().catch(() => ({})) as { messageId?: string; message?: string; code?: string };
+          if (!response.ok) throw new Error(result.message || result.code || `Brevo respondió ${response.status}`);
 
           await sql`
             UPDATE birthday_delivery_log
-            SET status = 'sent', provider_message_id = ${result.id ?? null}, sent_at = now(), updated_at = now()
+            SET status = 'sent', provider_message_id = ${result.messageId ?? null}, sent_at = now(), updated_at = now()
             WHERE id = ${claim[0].id}
           `;
           sent += 1;

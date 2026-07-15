@@ -148,11 +148,12 @@ La migración es repetible y crea las tablas `members`, `birthday_reminders`, `b
 
 ### Envío automático de recordatorios
 
-El envío usa la API de [Resend](https://resend.com) sin añadir secretos al código. Añade estas variables a tu plataforma de despliegue (consulta `.env.example`):
+El envío usa la API transaccional de [Brevo](https://www.brevo.com) sin añadir secretos al código. Añade estas variables a tu plataforma de despliegue (consulta `.env.example`):
 
 ```bash
-RESEND_API_KEY=re_...
-REMINDER_FROM_EMAIL="Shalom App <recordatorios@tu-dominio.com>"
+BREVO_API_KEY=xkeysib_...
+REMINDER_FROM_EMAIL=tu-correo-verificado@gmail.com
+REMINDER_FROM_NAME="Shalom App"
 CRON_SECRET=un-secreto-largo-y-aleatorio
 ```
 
