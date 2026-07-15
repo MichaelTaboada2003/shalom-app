@@ -25,7 +25,7 @@ Aplicación web para la comunidad Shalom con herramientas de gestión organizada
 
 ### Checklist
 
-- Crear listas personalizadas con título y emoji
+- Crear listas personalizadas con título e icono
 - Agregar, completar y eliminar elementos
 - Barra de progreso por lista
 - Vista general con tarjetas y porcentaje de avance

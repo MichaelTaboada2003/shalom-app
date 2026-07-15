@@ -1,10 +1,11 @@
 import { getDb } from '@/lib/db';
 import { requireAuth, AuthError } from '@/lib/auth';
+import { requireChecklistAccess } from '@/lib/checklist-access';
 import { NextResponse } from 'next/server';
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
     const { id } = await params;
     const body = await request.json();
     
@@ -13,6 +14,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const sql = getDb();
+    await requireChecklistAccess(sql, id, user);
     
     // Sequential update because neon() doesn't have begin()
     for (const item of body.items) {

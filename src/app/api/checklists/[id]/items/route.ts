@@ -1,14 +1,16 @@
 import { getDb } from '@/lib/db';
 import { requireAuth, AuthError } from '@/lib/auth';
+import { requireChecklistAccess } from '@/lib/checklist-access';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
     const { id } = await params;
     const { text, parent_id } = await request.json();
     if (!text?.trim()) return NextResponse.json({ error: 'Text is required' }, { status: 400 });
     const sql = getDb();
+    await requireChecklistAccess(sql, id, user);
     
     let posResult;
     if (parent_id) {

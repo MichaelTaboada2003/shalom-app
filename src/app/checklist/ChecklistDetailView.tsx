@@ -6,6 +6,7 @@ import { ArrowLeft, Plus, Trash2, Circle, CheckCircle2, GripVertical, CornerDown
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ChecklistIcon } from '@/components/checklist-icon';
 
 interface ChecklistItem {
   id: string;
@@ -317,7 +318,7 @@ export function ChecklistDetailView({ activeList, setActiveList, fetchChecklists
           <ArrowLeft size={18} className="text-text-secondary" />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold tracking-tight truncate">{activeList.emoji} {activeList.title}</h1>
+          <h1 className="flex min-w-0 items-center gap-2 text-xl font-bold tracking-tight"><ChecklistIcon name={activeList.emoji} size={19} className="shrink-0 text-accent" /><span className="truncate">{activeList.title}</span></h1>
         </div>
       </motion.header>
 

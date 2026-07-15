@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Plus, Trash2, ArrowLeft, Circle, CheckCircle2,
-} from 'lucide-react';
+import { Lock, Plus, Trash2, UsersRound } from 'lucide-react';
 import { ChecklistDetailView } from './ChecklistDetailView';
+import { ChecklistIcon, CHECKLIST_ICON_OPTIONS, type ChecklistIconName } from '@/components/checklist-icon';
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 
 interface ChecklistItem {
   id: string;
@@ -21,22 +21,24 @@ interface ChecklistSummary {
   created_at: string;
   total_items: number;
   completed_items: number;
+  visibility: 'community' | 'personal';
+  owner_id: string | null;
 }
 
 interface ChecklistDetail extends ChecklistSummary {
   items: ChecklistItem[];
 }
 
-const EMOJI_OPTIONS = ['📋', '⛪', '🎵', '🙏', '📖', '🎉', '🍞', '🕯️', '💒', '🎤'];
-
 export default function ChecklistPage() {
   const [checklists, setChecklists] = useState<ChecklistSummary[]>([]);
   const [activeList, setActiveList] = useState<ChecklistDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [newItemText, setNewItemText] = useState('');
   const [showNewListForm, setShowNewListForm] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
-  const [newListEmoji, setNewListEmoji] = useState('📋');
+  const [newListIcon, setNewListIcon] = useState<ChecklistIconName>('clipboard');
+  const [newListVisibility, setNewListVisibility] = useState<'community' | 'personal'>('community');
+  const [listPendingDeletion, setListPendingDeletion] = useState<ChecklistSummary | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchChecklists = useCallback(async () => {
     try {
@@ -60,57 +62,28 @@ export default function ChecklistPage() {
     try {
       const res = await fetch('/api/checklists', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newListTitle.trim(), emoji: newListEmoji }),
+        body: JSON.stringify({ title: newListTitle.trim(), icon: newListIcon, visibility: newListVisibility }),
       });
       const newList = await res.json();
-      setNewListTitle(''); setNewListEmoji('📋'); setShowNewListForm(false);
+      if (!res.ok) throw new Error(newList.error || 'No se pudo crear la lista');
+      setNewListTitle(''); setNewListIcon('clipboard'); setNewListVisibility('community'); setShowNewListForm(false);
       await fetchChecklists();
       await fetchDetail(newList.id);
     } catch (err) { console.error(err); }
-  }, [newListTitle, newListEmoji, fetchChecklists, fetchDetail]);
+  }, [newListTitle, newListIcon, newListVisibility, fetchChecklists, fetchDetail]);
 
-  const deleteChecklist = useCallback(async (id: string) => {
+  const deleteChecklist = useCallback(async () => {
+    if (!listPendingDeletion) return;
+    setDeleting(true);
     try {
-      await fetch(`/api/checklists/${id}`, { method: 'DELETE' });
-      if (activeList?.id === id) setActiveList(null);
-      fetchChecklists();
+      const response = await fetch(`/api/checklists/${listPendingDeletion.id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('No se pudo eliminar la lista');
+      if (activeList?.id === listPendingDeletion.id) setActiveList(null);
+      setListPendingDeletion(null);
+      await fetchChecklists();
     } catch (err) { console.error(err); }
-  }, [activeList, fetchChecklists]);
-
-  const addItem = useCallback(async () => {
-    if (!newItemText.trim() || !activeList) return;
-    try {
-      await fetch(`/api/checklists/${activeList.id}/items`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: newItemText.trim() }),
-      });
-      setNewItemText('');
-      fetchDetail(activeList.id);
-    } catch (err) { console.error(err); }
-  }, [newItemText, activeList, fetchDetail]);
-
-  const toggleItem = useCallback(async (item: ChecklistItem) => {
-    if (!activeList) return;
-    try {
-      await fetch(`/api/checklists/${activeList.id}/items/${item.id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: !item.completed }),
-      });
-      fetchDetail(activeList.id);
-    } catch (err) { console.error(err); }
-  }, [activeList, fetchDetail]);
-
-  const deleteItem = useCallback(async (itemId: string) => {
-    if (!activeList) return;
-    try {
-      await fetch(`/api/checklists/${activeList.id}/items/${itemId}`, { method: 'DELETE' });
-      fetchDetail(activeList.id);
-    } catch (err) { console.error(err); }
-  }, [activeList, fetchDetail]);
-
-  const completed = activeList?.items.filter(i => i.completed).length || 0;
-  const total = activeList?.items.length || 0;
-  const pct = total > 0 ? (completed / total) * 100 : 0;
+    finally { setDeleting(false); }
+  }, [activeList, fetchChecklists, listPendingDeletion]);
 
   // ─── Detail View ───
   if (activeList) {
@@ -136,13 +109,16 @@ export default function ChecklistPage() {
           >
             <div className="p-4 rounded-2xl border border-border-accent bg-bg-elevated flex flex-col gap-3">
               <div className="flex gap-1.5 flex-wrap justify-center">
-                {EMOJI_OPTIONS.map(e => (
+                {CHECKLIST_ICON_OPTIONS.map(icon => (
                   <button
-                    key={e}
-                    onClick={() => setNewListEmoji(e)}
-                    className={`w-10 h-10 rounded-xl text-lg flex items-center justify-center transition-all ${newListEmoji === e ? 'bg-accent-soft border border-accent scale-110' : 'bg-bg-card border border-border-subtle'}`}
+                    key={icon}
+                    type="button"
+                    onClick={() => setNewListIcon(icon)}
+                    aria-label={`Elegir icono ${icon}`}
+                    aria-pressed={newListIcon === icon}
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all ${newListIcon === icon ? 'scale-110 border border-accent bg-accent-soft text-text-primary' : 'border border-border-subtle bg-bg-card text-text-muted hover:text-text-secondary'}`}
                   >
-                    {e}
+                    <ChecklistIcon name={icon} size={18} />
                   </button>
                 ))}
               </div>
@@ -155,6 +131,11 @@ export default function ChecklistPage() {
                 autoFocus
                 className="h-11 px-4 rounded-xl bg-bg-primary border border-border-subtle text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent transition-colors"
               />
+              <div className="grid grid-cols-2 gap-2 rounded-2xl bg-bg-primary/70 p-1.5" role="group" aria-label="Visibilidad de la lista">
+                <button type="button" onClick={() => setNewListVisibility('community')} className={`flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold transition ${newListVisibility === 'community' ? 'bg-accent-soft text-text-primary shadow-sm ring-1 ring-accent/40' : 'text-text-muted hover:text-text-secondary'}`}><UsersRound size={15} /> Para la comunidad</button>
+                <button type="button" onClick={() => setNewListVisibility('personal')} className={`flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold transition ${newListVisibility === 'personal' ? 'bg-accent-soft text-text-primary shadow-sm ring-1 ring-accent/40' : 'text-text-muted hover:text-text-secondary'}`}><Lock size={14} /> Solo para mí</button>
+              </div>
+              <p className="px-1 text-[11px] leading-5 text-text-muted">{newListVisibility === 'community' ? 'Todos podrán ver y colaborar en esta lista.' : 'Solo tú podrás ver y editar esta lista.'}</p>
               <div className="flex gap-2">
                 <button onClick={() => setShowNewListForm(false)} className="flex-1 h-10 rounded-xl bg-bg-card border border-border-subtle text-xs font-semibold text-text-secondary active:scale-[0.98]">Cancelar</button>
                 <button onClick={createChecklist} disabled={!newListTitle.trim()} className="flex-1 h-10 rounded-xl bg-accent text-white text-xs font-semibold disabled:opacity-40 active:scale-[0.98]">Crear</button>
@@ -189,16 +170,16 @@ export default function ChecklistPage() {
               className="relative p-4 rounded-2xl bg-bg-card border border-border-subtle hover:border-border-medium cursor-pointer transition-all active:scale-[0.97] flex flex-col gap-2"
             >
               <div className="flex justify-between items-start">
-                <span className="text-2xl">{list.emoji}</span>
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-accent-soft text-accent"><ChecklistIcon name={list.emoji} size={20} /></span>
                 <button
-                  onClick={e => { e.stopPropagation(); deleteChecklist(list.id); }}
+                  onClick={e => { e.stopPropagation(); setListPendingDeletion(list); }}
                   className="p-1 rounded-lg text-text-muted hover:text-danger hover:bg-danger-soft transition-colors"
                   aria-label="Eliminar"
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
-              <h3 className="text-sm font-semibold text-text-primary truncate">{list.title}</h3>
+              <div className="flex min-w-0 items-center gap-2"><h3 className="truncate text-sm font-semibold text-text-primary">{list.title}</h3><span title={list.visibility === 'community' ? 'Lista comunitaria' : 'Lista personal'} className={`grid h-5 w-5 shrink-0 place-items-center rounded-md ${list.visibility === 'community' ? 'bg-success-soft text-success' : 'bg-accent-soft text-accent'}`}>{list.visibility === 'community' ? <UsersRound size={12} /> : <Lock size={11} />}</span></div>
               {list.total_items > 0 ? (
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1 rounded-full bg-bg-elevated overflow-hidden">
@@ -216,7 +197,7 @@ export default function ChecklistPage() {
 
       {!loading && checklists.length === 0 && !showNewListForm && (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <span className="text-5xl">📋</span>
+          <span className="grid h-16 w-16 place-items-center rounded-3xl bg-accent-soft text-accent"><ChecklistIcon name="clipboard" size={30} /></span>
           <p className="text-sm text-text-secondary">No tienes listas aún</p>
           <p className="text-xs text-text-muted">Crea tu primera checklist</p>
         </div>
@@ -227,6 +208,8 @@ export default function ChecklistPage() {
           <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
         </div>
       )}
+
+      <ConfirmDeleteDialog open={Boolean(listPendingDeletion)} title="¿Borrar esta lista?" description={<>Vas a eliminar <b className="text-text-primary">{listPendingDeletion?.title}</b> y todos sus elementos. Esta acción no se puede deshacer.</>} onCancel={() => setListPendingDeletion(null)} onConfirm={deleteChecklist} loading={deleting} />
     </div>
   );
 }

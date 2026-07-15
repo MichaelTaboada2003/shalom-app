@@ -23,17 +23,17 @@ const seedUsers = [
   { email: 'seed.member@shalom.test', name: 'Valentina Cruz', role: 'member' },
 ];
 const seedMembers = [
-  { fullName: 'Ana Sofía Gómez', email: 'ana.gomez@shalom.test', phone: '300 555 0101', birthDate: '1992-08-02', avatarStyle: 'lilac', ministry: 'Música', bio: 'Le encanta recibir a las personas con una canción y una sonrisa.', status: 'active' },
-  { fullName: 'Samuel Torres', email: 'samuel.torres@shalom.test', phone: '300 555 0102', birthDate: '1988-07-25', avatarStyle: 'sky', ministry: 'Jóvenes', bio: 'Conecta a los jóvenes de la comunidad con mucha energía.', status: 'active' },
-  { fullName: 'Camila Ríos', email: 'camila.rios@shalom.test', phone: '300 555 0103', birthDate: '1996-09-18', avatarStyle: 'mint', ministry: 'Acogida', bio: 'Hace que cada persona nueva se sienta en casa.', status: 'active' },
-  { fullName: 'Mateo Salazar', email: 'mateo.salazar@shalom.test', phone: '300 555 0104', birthDate: '1985-11-09', avatarStyle: 'sunset', ministry: 'Logística', bio: 'Siempre tiene una solución práctica para cada retiro.', status: 'active' },
-  { fullName: 'Juliana Peña', email: 'juliana.pena@shalom.test', phone: '300 555 0105', birthDate: '1990-12-22', avatarStyle: 'rose', ministry: 'Infantil', bio: 'Cuenta historias que los más pequeños nunca olvidan.', status: 'active' },
-  { fullName: 'Tomás Herrera', email: 'tomas.herrera@shalom.test', phone: null, birthDate: null, avatarStyle: 'sky', ministry: 'Comunidad', bio: 'Perfil de ejemplo sin cumpleaños para probar estados vacíos.', status: 'inactive' },
+  { fullName: 'Ana Sofía Gómez', email: 'ana.gomez@shalom.test', phone: '300 555 0101', birthDate: '1992-08-02', avatarStyle: 'lilac', avatarGender: 'woman', avatarSkinTone: 'light', avatarHairStyle: 'waves', ministry: 'Música', bio: 'Le encanta recibir a las personas con una canción y una sonrisa.', status: 'active' },
+  { fullName: 'Samuel Torres', email: 'samuel.torres@shalom.test', phone: '300 555 0102', birthDate: '1988-07-25', avatarStyle: 'sky', avatarGender: 'man', avatarSkinTone: 'tan', avatarHairStyle: 'fade', ministry: 'Jóvenes', bio: 'Conecta a los jóvenes de la comunidad con mucha energía.', status: 'active' },
+  { fullName: 'Camila Ríos', email: 'camila.rios@shalom.test', phone: '300 555 0103', birthDate: '1996-09-18', avatarStyle: 'mint', avatarGender: 'woman', avatarSkinTone: 'deep', avatarHairStyle: 'braids', ministry: 'Acogida', bio: 'Hace que cada persona nueva se sienta en casa.', status: 'active' },
+  { fullName: 'Mateo Salazar', email: 'mateo.salazar@shalom.test', phone: '300 555 0104', birthDate: '1985-11-09', avatarStyle: 'sunset', avatarGender: 'man', avatarSkinTone: 'medium', avatarHairStyle: 'curls', ministry: 'Logística', bio: 'Siempre tiene una solución práctica para cada retiro.', status: 'active' },
+  { fullName: 'Juliana Peña', email: 'juliana.pena@shalom.test', phone: '300 555 0105', birthDate: '1990-12-22', avatarStyle: 'rose', avatarGender: 'woman', avatarSkinTone: 'fair', avatarHairStyle: 'bun', ministry: 'Infantil', bio: 'Cuenta historias que los más pequeños nunca olvidan.', status: 'active' },
+  { fullName: 'Tomás Herrera', email: 'tomas.herrera@shalom.test', phone: null, birthDate: null, avatarStyle: 'sky', avatarGender: 'man', avatarSkinTone: 'deep', avatarHairStyle: 'short', ministry: 'Comunidad', bio: 'Perfil de ejemplo sin cumpleaños para probar estados vacíos.', status: 'inactive' },
 ];
 const seedChecklists = [
-  { title: 'Reunión de comunidad', emoji: '⛪', items: ['Preparar bienvenida', 'Revisar equipo de sonido', 'Compartir roles', 'Cerrar con oración'] },
-  { title: 'Retiro Shalom · Demo', emoji: '✦', items: ['Confirmar asistentes', 'Preparar kits', 'Organizar transporte'] },
-  { title: 'Ideas para la semana', emoji: '☀', items: ['Llamar a una persona nueva', 'Celebrar un cumpleaños', 'Actualizar el Mundo Shalom'] },
+  { title: 'Reunión de comunidad', icon: 'church', items: ['Preparar bienvenida', 'Revisar equipo de sonido', 'Compartir roles', 'Cerrar con oración'] },
+  { title: 'Retiro Shalom · Demo', icon: 'tent', items: ['Confirmar asistentes', 'Preparar kits', 'Organizar transporte'] },
+  { title: 'Ideas para la semana', icon: 'clipboard', items: ['Llamar a una persona nueva', 'Celebrar un cumpleaños', 'Actualizar el Mundo Shalom'] },
 ];
 
 async function getOrCreateUser(user, passwordHash) {
@@ -49,10 +49,16 @@ async function getOrCreateUser(user, passwordHash) {
 
 async function getOrCreateMember(member) {
   const existing = await sql`SELECT id FROM members WHERE lower(email) = lower(${member.email}) LIMIT 1`;
-  if (existing[0]) return { id: existing[0].id, created: false };
+  if (existing[0]) {
+    await sql`
+      UPDATE members SET avatar_gender = ${member.avatarGender}, avatar_skin_tone = ${member.avatarSkinTone},
+      avatar_hair_style = ${member.avatarHairStyle}, updated_at = now() WHERE id = ${existing[0].id}
+    `;
+    return { id: existing[0].id, created: false };
+  }
   const rows = await sql`
-    INSERT INTO members (full_name, email, phone, birth_date, avatar_style, ministry, bio, status)
-    VALUES (${member.fullName}, ${member.email}, ${member.phone}, ${member.birthDate}, ${member.avatarStyle}, ${member.ministry}, ${member.bio}, ${member.status})
+    INSERT INTO members (full_name, email, phone, birth_date, avatar_style, avatar_gender, avatar_skin_tone, avatar_hair_style, ministry, bio, status)
+    VALUES (${member.fullName}, ${member.email}, ${member.phone}, ${member.birthDate}, ${member.avatarStyle}, ${member.avatarGender}, ${member.avatarSkinTone}, ${member.avatarHairStyle}, ${member.ministry}, ${member.bio}, ${member.status})
     RETURNING id
   `;
   return { id: rows[0].id, created: true };
@@ -61,8 +67,9 @@ async function getOrCreateMember(member) {
 async function getOrCreateChecklist(checklist) {
   const existing = await sql`SELECT id FROM checklists WHERE title = ${checklist.title} LIMIT 1`;
   const checklistId = existing[0]?.id ?? (await sql`
-    INSERT INTO checklists (title, emoji) VALUES (${checklist.title}, ${checklist.emoji}) RETURNING id
+    INSERT INTO checklists (title, emoji) VALUES (${checklist.title}, ${checklist.icon}) RETURNING id
   `)[0].id;
+  if (existing[0]) await sql`UPDATE checklists SET emoji = ${checklist.icon} WHERE id = ${checklistId}`;
   const itemCount = await sql`SELECT count(*)::int AS count FROM checklist_items WHERE checklist_id = ${checklistId}`;
   if (Number(itemCount[0].count) === 0) {
     for (const [position, text] of checklist.items.entries()) {
