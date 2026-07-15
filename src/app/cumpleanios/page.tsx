@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  BellRing, CalendarClock, CalendarDays, Check, ChevronDown, Mail, MailPlus,
+  BellRing, CalendarClock, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Mail, MailPlus,
   Pencil, Plus, Trash2, UsersRound, X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -43,6 +43,71 @@ function nextDispatch(birthDate: string, daysBefore: number) {
   let dispatch = addDays(birthdayDateForYear(birthDate, today.getUTCFullYear()), -daysBefore);
   if (dispatch < today) dispatch = addDays(birthdayDateForYear(birthDate, today.getUTCFullYear() + 1), -daysBefore);
   return dispatch;
+}
+
+const WEEK_DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+function BirthdayCalendar({ members }: { members: Member[] }) {
+  const today = new Date();
+  const [month, setMonth] = useState(() => new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)));
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const monthKey = month.toISOString().slice(0, 7);
+  const monthLabel = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(month);
+  const { daysInMonth, startOffset, birthdaysByDay } = useMemo(() => {
+    const year = month.getUTCFullYear();
+    const monthIndex = month.getUTCMonth();
+    const birthdays = new Map<number, Member[]>();
+    for (const member of members) {
+      if (!member.birth_date) continue;
+      const celebration = birthdayDateForYear(member.birth_date, year);
+      if (celebration.getUTCMonth() !== monthIndex) continue;
+      const day = celebration.getUTCDate();
+      birthdays.set(day, [...(birthdays.get(day) ?? []), member]);
+    }
+    birthdays.forEach(people => people.sort((a, b) => a.full_name.localeCompare(b.full_name, 'es')));
+    return {
+      daysInMonth: new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate(),
+      startOffset: (new Date(Date.UTC(year, monthIndex, 1)).getUTCDay() + 6) % 7,
+      birthdaysByDay: birthdays,
+    };
+  }, [members, month]);
+  const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
+  const selectedPeople = selectedDate?.startsWith(monthKey)
+    ? birthdaysByDay.get(Number(selectedDate.slice(-2))) ?? []
+    : [];
+  const selectedLabel = selectedDate
+    ? new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${selectedDate}T00:00:00Z`))
+    : null;
+
+  const changeMonth = (amount: number) => {
+    setMonth(current => new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + amount, 1)));
+  };
+
+  return (
+    <section className="birthday-calendar" aria-labelledby="birthday-calendar-title">
+      <header className="birthday-calendar-header">
+        <div><div className="eyebrow"><CalendarDays size={14} /> Calendario de la comunidad</div><h2 id="birthday-calendar-title">Cumpleaños del mes</h2><p>Explora las fechas destacadas para conocer a quién celebramos.</p></div>
+        <div className="birthday-calendar-navigation"><button type="button" onClick={() => changeMonth(-1)} className="icon-button" aria-label="Mes anterior"><ChevronLeft size={18} /></button><strong>{monthLabel}</strong><button type="button" onClick={() => changeMonth(1)} className="icon-button" aria-label="Mes siguiente"><ChevronRight size={18} /></button></div>
+      </header>
+      <div className="birthday-calendar-weekdays" aria-hidden="true">{WEEK_DAYS.map(day => <span key={day}>{day}</span>)}</div>
+      <div className="birthday-calendar-grid">
+        {Array.from({ length: totalCells }, (_, index) => {
+          const day = index - startOffset + 1;
+          if (day < 1 || day > daysInMonth) return <div key={`empty-${index}`} className="birthday-calendar-empty" />;
+          const people = birthdaysByDay.get(day) ?? [];
+          const dateKey = `${monthKey}-${String(day).padStart(2, '0')}`;
+          const isToday = dateKey === new Date().toISOString().slice(0, 10);
+          const isSelected = selectedDate === dateKey;
+          const content = <><span className="birthday-calendar-day"><span>{day}</span>{isToday && <i>Hoy</i>}</span>{people.slice(0, 2).map(member => <span key={member.id} className="birthday-calendar-person"><MemberAvatar name={member.full_name} style={member.avatar_style} size="sm" className="birthday-calendar-avatar" /><b>{member.full_name.split(' ')[0]}</b></span>)}{people.length > 2 && <span className="birthday-calendar-more">+{people.length - 2} más</span>}</>;
+          return people.length > 0 ? <button key={dateKey} type="button" onClick={() => setSelectedDate(dateKey)} className={`birthday-calendar-cell birthday-calendar-event ${isSelected ? 'birthday-calendar-selected' : ''}`} aria-pressed={isSelected} aria-label={`Ver cumpleaños del ${day}`}>{content}</button> : <div key={dateKey} className="birthday-calendar-cell">{content}</div>;
+        })}
+      </div>
+      <div className="birthday-calendar-details">
+        <div><span className="birthday-calendar-detail-icon"><CalendarDays size={18} /></span><div><small>{selectedLabel ? selectedLabel : 'Selecciona una fecha destacada'}</small><h3>{selectedPeople.length ? `${selectedPeople.length} cumpleaños${selectedPeople.length === 1 ? '' : 's'} para celebrar` : 'Los detalles aparecerán aquí'}</h3></div></div>
+        {selectedPeople.length > 0 ? <div className="birthday-calendar-people">{selectedPeople.map(member => <div key={member.id} className="birthday-calendar-detail-person"><MemberAvatar name={member.full_name} style={member.avatar_style} size="sm" /><span><b>{member.full_name}</b><small>{member.ministry || 'Comunidad Shalom'}</small></span></div>)}</div> : <p>Elige un día con integrantes para ver sus datos básicos.</p>}
+      </div>
+    </section>
+  );
 }
 
 function ReminderForm({ reminder, members, contacts, onClose, onSaved }: { reminder?: BirthdayReminder | null; members: Member[]; contacts: Recipient[]; onClose: () => void; onSaved: () => void }) {
@@ -126,6 +191,7 @@ export default function CumpleaniosPage() {
     <div className="birthday-page mx-auto max-w-6xl px-4 pb-12 pt-5 sm:px-6 sm:pt-7">
       <section className="birthday-hero relative overflow-hidden rounded-[2rem] border border-border-medium px-6 py-8 sm:px-9 sm:py-10"><div className="relative z-10 max-w-xl"><div className="eyebrow"><BellRing size={14} /> Cuidado de la comunidad</div><h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">Que ningún <span className="text-accent">cumpleaños</span> pase desapercibido.</h1><p className="mt-4 max-w-lg text-sm leading-7 text-text-secondary sm:text-base">Programa los avisos una vez. Shalom envía el recordatorio correcto, el día correcto, a las personas que tú elijas.</p>{canManage ? <button onClick={() => setEditing(null)} className="primary-button mt-7"><Plus size={17} /> Crear recordatorio</button> : <p className="mt-7 inline-flex rounded-full border border-border-subtle bg-bg-primary/35 px-3 py-2 text-xs font-bold text-text-secondary">Consulta los próximos avisos de la comunidad.</p>}</div><div className="birthday-cake-decoration" aria-hidden="true"><span /><span /><span /></div></section>
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3"><div className="stat-card"><BellRing size={18} className="text-accent" /><strong>{activeCount}</strong><span>avisos activos</span></div><div className="stat-card"><UsersRound size={18} className="text-success" /><strong>{recipientCount}</strong><span>destinatarios</span></div><div className="stat-card"><CalendarClock size={18} className="text-warning" /><strong>{members.filter(member => member.birth_date).length}</strong><span>fechas disponibles</span></div></section>
+      {!loading && <BirthdayCalendar members={members} />}
       {error && <div role="alert" className="rounded-2xl border border-danger/20 bg-danger-soft px-4 py-3 text-sm text-danger">{error}</div>}
       {loading ? <div className="grid place-items-center py-24"><div className="loader" /></div> : reminders.length === 0 ? <div className="empty-state"><MailPlus size={30} /><h3>Empieza con una celebración</h3><p>{canManage ? 'Elige a un integrante, cuántos días antes avisar y los correos que deben recibirlo.' : 'Aún no hay recordatorios de cumpleaños para consultar.'}</p>{canManage && <button onClick={() => setEditing(null)} className="primary-button mt-2"><Plus size={16} /> Primer recordatorio</button>}</div> : <div className="space-y-4">{reminders.map((reminder, index) => { const isOpen = expanded === reminder.id; const recipients = normalizeRecipients(reminder.recipients); return <motion.article key={reminder.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index, 7) * .04 }} className={`reminder-card ${reminder.active ? '' : 'opacity-60'}`}><button onClick={() => setExpanded(isOpen ? null : reminder.id)} className="flex w-full items-center gap-4 px-4 py-5 text-left sm:px-5"><MemberAvatar name={reminder.member_name} size="sm" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate font-bold">{reminder.title}</h3><span className={`status-badge ${reminder.active ? '' : 'status-badge-muted'}`}>{reminder.active ? 'Activo' : 'Pausado'}</span></div><p className="mt-1 text-sm text-text-secondary">{reminder.member_name} · {reminder.days_before === 0 ? 'el mismo día' : `${reminder.days_before} días antes`}</p></div><ChevronDown size={18} className={`shrink-0 text-text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} /></button><AnimatePresence>{isOpen && <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden"><div className="border-t border-border-subtle px-4 py-5 sm:px-5"><div className="grid gap-3 text-sm sm:grid-cols-2"><div className="mini-info"><CalendarDays size={16} /><span><small>Próximo envío</small>{labelDate(nextDispatch(reminder.member_birth_date, Number(reminder.days_before)))}</span></div><div className="mini-info"><Mail size={16} /><span><small>Destinatarios</small>{recipients.length} correo{recipients.length === 1 ? '' : 's'}</span></div></div>{reminder.subject && <p className="mt-5 rounded-2xl bg-bg-primary px-4 py-3 text-sm text-text-secondary"><b className="text-text-primary">Asunto:</b> {reminder.subject}</p>}{reminder.message && <p className="mt-3 rounded-2xl bg-bg-primary px-4 py-3 text-sm leading-6 text-text-secondary">{reminder.message}</p>}<div className="mt-5 flex flex-wrap gap-2">{recipients.map(recipient => <span key={recipient.email} className="email-chip"><Mail size={12} />{recipient.name || recipient.email}</span>)}</div>{canManage && <div className="mt-6 grid grid-cols-2 gap-3"><button onClick={() => setEditing(reminder)} className="secondary-button"><Pencil size={16} /> Editar</button><button onClick={() => setReminderPendingDeletion(reminder)} className="danger-button"><Trash2 size={16} /> Eliminar</button></div>}</div></motion.div>}</AnimatePresence></motion.article>; })}</div>}
       <AnimatePresence>{editing !== undefined && <ReminderForm key={editing?.id ?? 'new'} reminder={editing} members={members} contacts={contacts} onClose={() => setEditing(undefined)} onSaved={load} />}</AnimatePresence>
