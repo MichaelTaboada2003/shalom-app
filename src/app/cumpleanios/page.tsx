@@ -54,6 +54,16 @@ function BirthdayCalendar({ members }: { members: Member[] }) {
   const [collapsed, setCollapsed] = useState(false);
   const monthKey = month.toISOString().slice(0, 7);
   const monthLabel = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(month);
+  const upcomingBirthdays = useMemo(() => {
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    return members.flatMap(member => {
+      if (!member.birth_date) return [];
+      let date = birthdayDateForYear(member.birth_date, today.getUTCFullYear());
+      if (date < today) date = birthdayDateForYear(member.birth_date, today.getUTCFullYear() + 1);
+      return [{ member, date }];
+    }).sort((first, second) => first.date.getTime() - second.date.getTime());
+  }, [members]);
   const { daysInMonth, startOffset, birthdaysByDay } = useMemo(() => {
     const year = month.getUTCFullYear();
     const monthIndex = month.getUTCMonth();
@@ -83,6 +93,11 @@ function BirthdayCalendar({ members }: { members: Member[] }) {
   const changeMonth = (amount: number) => {
     setMonth(current => new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + amount, 1)));
   };
+  const openBirthdayDate = (date: Date) => {
+    setMonth(new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)));
+    setSelectedDate(date.toISOString().slice(0, 10));
+    setCollapsed(false);
+  };
 
   return (
     <section className="birthday-calendar" aria-labelledby="birthday-calendar-title">
@@ -93,6 +108,7 @@ function BirthdayCalendar({ members }: { members: Member[] }) {
           <button type="button" onClick={() => setCollapsed(current => !current)} className="birthday-calendar-toggle" aria-expanded={!collapsed} aria-controls="birthday-calendar-content"><span>{collapsed ? `Abrir ${monthLabel}` : 'Reducir'}</span><ChevronDown size={16} className={collapsed ? '' : 'rotate-180'} /></button>
         </div>
       </header>
+      {upcomingBirthdays.length > 0 && <div className="birthday-calendar-upcoming" aria-label="Próximas fechas de cumpleaños"><span className="birthday-calendar-upcoming-label">Próximas fechas</span><div>{upcomingBirthdays.slice(0, 5).map(({ member, date }) => <button key={member.id} type="button" onClick={() => openBirthdayDate(date)} className="birthday-calendar-upcoming-person"><MemberAvatar name={member.full_name} style={member.avatar_style} size="sm" /><span><b>{member.full_name}</b><small>{new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(date)}</small></span></button>)}</div></div>}
       <AnimatePresence initial={false}>
         {!collapsed && <motion.div id="birthday-calendar-content" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
           <div className="birthday-calendar-weekdays" aria-hidden="true">{WEEK_DAYS.map(day => <span key={day}>{day}</span>)}</div>
