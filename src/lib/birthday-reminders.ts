@@ -60,7 +60,7 @@ export function parseBirthdayReminderInput(body: unknown): { value?: BirthdayRem
 }
 
 export function birthdayDateForYear(birthDate: string, year: number): Date {
-  const [, month, day] = birthDate.split('-').map(Number);
+  const [, month, day] = birthDate.slice(0, 10).split('-').map(Number);
   // A Feb 29 birthday is celebrated on Feb 28 in non-leap years for scheduling.
   const result = new Date(Date.UTC(year, month - 1, day));
   if (result.getUTCMonth() !== month - 1) return new Date(Date.UTC(year, 1, 28));
