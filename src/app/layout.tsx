@@ -15,11 +15,10 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, loading, logout } = useAuth();
   const isLoginPage = pathname === '/login';
-  const canManageCommunity = user?.role === 'admin' || user?.role === 'leader';
   const mustRedirect = !loading && (
     (!user && !isLoginPage) ||
     (user && isLoginPage) ||
-    (user?.role === 'member' && (pathname.startsWith('/retiro') || pathname.startsWith('/cumpleanios'))) ||
+    (user?.role === 'member' && pathname.startsWith('/retiro')) ||
     (user?.role !== 'admin' && pathname.startsWith('/admin'))
   );
 
@@ -36,7 +35,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: '/checklist', label: 'Listas', Icon: ClipboardCheck },
     { href: '/integrantes', label: 'Personas', Icon: UsersRound },
-    ...(canManageCommunity ? [{ href: '/cumpleanios', label: 'Cumples', Icon: CakeSlice }] : []),
+    { href: '/cumpleanios', label: 'Cumples', Icon: CakeSlice },
     { href: '/mundo', label: 'Mundo', Icon: Church },
     ...(user?.role !== 'member' ? [{ href: '/retiro', label: 'Retiro', Icon: Tent }] : []),
     ...(user?.role === 'admin' ? [{ href: '/admin', label: 'Admin', Icon: Shield }] : []),
@@ -58,7 +57,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
           <button onClick={async () => { await logout(); router.push('/login'); }} className="icon-button" aria-label="Cerrar sesión"><LogOut size={17} /></button>
         </div>
       </header>
-      <main id="main-content" className="relative z-10 flex-1 overflow-y-auto pb-24">{children}</main>
+      <main id="main-content" className="app-main relative z-10 flex-1 overflow-y-auto">{children}</main>
       <nav aria-label="Navegación principal" className="app-nav">
         {navItems.map(({ href, label, Icon }) => {
           const isActive = pathname.startsWith(href);

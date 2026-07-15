@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    await requireAuth(['admin', 'leader']);
+    await requireAuth();
     const sql = getDb();
     const rows = await sql`
       SELECT
