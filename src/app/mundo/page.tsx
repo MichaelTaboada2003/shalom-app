@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
   BellRing, BookHeart, CakeSlice, CalendarDays, Church, Hand, MapPin, Moon,
-  Pause, Play, Sparkles, Sun, UsersRound, X,
+  Mail, Pause, Phone, Play, Sparkles, Sun, UsersRound, X,
 } from 'lucide-react';
 import type { Member } from '@/lib/community';
 import { CommunityCharacter, profileFromMember } from '@/components/community-character';
@@ -96,6 +96,7 @@ export default function MundoPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Member | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [error, setError] = useState('');
   const [paused, setPaused] = useState(false);
   const [gathered, setGathered] = useState(false);
@@ -130,6 +131,20 @@ export default function MundoPage() {
     setGathered(false);
     setPaused(current => !current);
   };
+  const closeDetail = () => {
+    setProfileOpen(false);
+    setSelected(null);
+  };
+  useEffect(() => {
+    if (!selected) return;
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (profileOpen) setProfileOpen(false);
+      else setSelected(null);
+    };
+    window.addEventListener('keydown', closeWithEscape);
+    return () => window.removeEventListener('keydown', closeWithEscape);
+  }, [profileOpen, selected]);
 
   return (
     <div className={styles.page}>
@@ -181,7 +196,7 @@ export default function MundoPage() {
             <div className={styles.bench}><span className={styles.benchBack} /><span className={styles.benchSeat} /></div>
             <div className={styles.flowerBed}><span className={styles.flower} /><span className={styles.flower} /><span className={styles.flower} /></div>
             <div className={styles.lamp} />
-            {villagers.map((member, index) => <WorldCharacter key={member.id} member={member} index={index} selected={selected?.id === member.id} paused={paused} gathered={gathered} celebrating={celebrating} reducedMotion={shouldReduceMotion} onSelect={() => setSelected(member)} />)}
+            {villagers.map((member, index) => <WorldCharacter key={member.id} member={member} index={index} selected={selected?.id === member.id} paused={paused} gathered={gathered} celebrating={celebrating} reducedMotion={shouldReduceMotion} onSelect={() => { setProfileOpen(false); setSelected(member); }} />)}
             {celebrating && CONFETTI.map((piece, index) => <span key={index} className={styles.confetti} style={{ left: piece.left, animationDelay: piece.delay }} />)}
             <span className={styles.sceneLabel}><Church size={15} /> Plaza Shalom</span>
           </section>
@@ -196,10 +211,10 @@ export default function MundoPage() {
 
       <AnimatePresence>
         {selected && <>
-          <motion.button className={styles.detailBackdrop} aria-label="Cerrar detalle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelected(null)} />
+          <motion.button className={styles.detailBackdrop} aria-label="Cerrar detalle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeDetail} />
           <motion.aside className={styles.detail} initial={{ opacity: 0, x: 35, y: 12 }} animate={{ opacity: 1, x: 0, y: 0 }} exit={{ opacity: 0, x: 35 }} transition={{ type: 'spring', stiffness: 260, damping: 26 }}>
             <div className={styles.detailTop}>
-              <button onClick={() => setSelected(null)} className={styles.detailClose} aria-label="Cerrar"><X size={18} /></button>
+              <button onClick={closeDetail} className={styles.detailClose} aria-label="Cerrar"><X size={18} /></button>
               <CommunityCharacter profile={profileFromMember(selected)} size="large" selected className={styles.detailCharacter} />
               <div className={styles.detailIdentity}><small>Habitante de Mundo Shalom</small><h3>{selected.full_name}</h3><p>{selected.ministry || 'Comunidad Shalom'}</p></div>
             </div>
@@ -209,9 +224,33 @@ export default function MundoPage() {
                 <div className={styles.detailItem}><CalendarDays size={17} /><span><small>Cumpleaños</small>{birthdayLabel(selected.birth_date)}</span></div>
                 <div className={styles.detailItem}><MapPin size={17} /><span><small>Su rincón</small>{selected.ministry || 'La plaza'}</span></div>
               </div>
-              <button onClick={() => router.push('/integrantes')} className={`secondary-button ${styles.detailAction}`}><BookHeart size={16} /> Ver ficha completa</button>
+              <button onClick={() => setProfileOpen(true)} className={`secondary-button ${styles.detailAction}`}><BookHeart size={16} /> Ver ficha completa</button>
             </div>
           </motion.aside>
+          <AnimatePresence>
+            {profileOpen && <motion.div className={styles.profileModal} role="dialog" aria-modal="true" aria-labelledby="member-profile-title" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <button className={styles.profileBackdrop} onClick={() => setProfileOpen(false)} aria-label="Cerrar ficha completa" />
+              <motion.article className={styles.profileCard} initial={{ opacity: 0, y: 24, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 24, scale: .97 }} transition={{ type: 'spring', stiffness: 280, damping: 25 }}>
+                <header className={styles.profileHeader}>
+                  <CommunityCharacter profile={profileFromMember(selected)} size="hero" selected className={styles.profileCharacter} />
+                  <div><span className={styles.profileEyebrow}>Ficha de integrante</span><h2 id="member-profile-title">{selected.full_name}</h2><p>{selected.ministry || 'Comunidad Shalom'}</p></div>
+                  <button onClick={() => setProfileOpen(false)} className={styles.profileClose} aria-label="Cerrar ficha completa"><X size={18} /></button>
+                </header>
+                <div className={styles.profileBody}>
+                  <section className={styles.profileSection}>
+                    <h3>Su historia</h3>
+                    <p>{selected.bio || 'Esta persona hace parte de la familia Shalom.'}</p>
+                  </section>
+                  <section className={styles.profileFacts} aria-label="Información de integrante">
+                    <div className={styles.profileFact}><CalendarDays size={18} /><span><small>Cumpleaños</small>{birthdayLabel(selected.birth_date)}</span></div>
+                    <div className={styles.profileFact}><MapPin size={18} /><span><small>Servicio o grupo</small>{selected.ministry || 'Comunidad Shalom'}</span></div>
+                    {selected.email && <a className={styles.profileFact} href={`mailto:${selected.email}`}><Mail size={18} /><span><small>Correo</small>{selected.email}</span></a>}
+                    {selected.phone && <a className={styles.profileFact} href={`tel:${selected.phone}`}><Phone size={18} /><span><small>Teléfono</small>{selected.phone}</span></a>}
+                  </section>
+                </div>
+              </motion.article>
+            </motion.div>}
+          </AnimatePresence>
         </>}
       </AnimatePresence>
     </div>
