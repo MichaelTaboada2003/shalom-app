@@ -99,7 +99,7 @@ function MemberForm({ member, onClose, onSaved }: { member?: Member | null; onCl
             <label className={`form-label ${styles.wide}`}>Nombre completo<input required value={form.fullName} onChange={event => update('fullName', event.target.value)} className={inputClass} placeholder="Nombre y apellidos" /></label>
             <label className="form-label">Correo<input type="email" value={form.email} onChange={event => update('email', event.target.value)} className={inputClass} placeholder="persona@correo.com" /></label>
             <label className="form-label">Teléfono<input value={form.phone} onChange={event => update('phone', event.target.value)} className={inputClass} placeholder="300 000 0000" /></label>
-            <label className="form-label">Cumpleaños<input type="date" value={form.birthDate} onChange={event => update('birthDate', event.target.value)} className={inputClass} /></label>
+            <label className="form-label">Fecha de nacimiento<span className={styles.birthDateControl}><CalendarDays size={18} aria-hidden="true" /><input type="date" value={form.birthDate} onChange={event => update('birthDate', event.target.value)} className={`${inputClass} ${styles.birthDateInput}`} /></span><small className={styles.birthDateHelp}>La usaremos para celebrar su cumpleaños cada año.</small></label>
             <label className="form-label">Servicio o grupo<input value={form.ministry} onChange={event => update('ministry', event.target.value)} className={inputClass} placeholder="Música, acogida…" /></label>
             <div className={styles.wide}><span className="form-label-text">Su personaje</span><p className={styles.appearanceHelp}>Elige sus rasgos para que se reconozca en Mundo Shalom.</p><div className={styles.genderChoices}>{(['woman', 'man'] as const).map(gender => <button key={gender} type="button" onClick={() => updateGender(gender)} className={`${styles.genderChoice} ${form.avatarGender === gender ? styles.styleChoiceActive : ''}`} aria-pressed={form.avatarGender === gender}><span className={styles.genderPortrait} data-gender={gender} />{genderLabels[gender]}</button>)}</div></div>
             <div className={styles.wide}><span className="form-label-text">Tono de piel</span><div className={styles.toneChoices}>{AVATAR_SKIN_TONES.map(tone => <button key={tone} type="button" onClick={() => update('avatarSkinTone', tone)} className={`${styles.toneChoice} ${form.avatarSkinTone === tone ? styles.styleChoiceActive : ''}`} aria-pressed={form.avatarSkinTone === tone}><span className={styles.skinSwatch} data-skin={tone} />{skinLabels[tone]}</button>)}</div></div>
@@ -173,6 +173,7 @@ export default function IntegrantesPage() {
   const saveMember = (saved: Member) => {
     setMembers(current => current.some(member => member.id === saved.id) ? current.map(member => member.id === saved.id ? saved : member) : [saved, ...current]);
     setSelected(current => current?.id === saved.id ? saved : current);
+    window.dispatchEvent(new Event('shalom:members-updated'));
   };
   const removeMember = async () => {
     if (!memberPendingDeletion) return;

@@ -190,6 +190,16 @@ export default function CumpleaniosPage() {
   const canManage = user?.role === 'admin' || user?.role === 'leader';
   const load = useCallback(async () => { try { const [remindersResponse, membersResponse, contactsResponse] = await Promise.all([fetch('/api/birthday-reminders'), fetch('/api/members'), fetch('/api/reminder-recipients')]); const [remindersData, membersData, contactsData] = await Promise.all([remindersResponse.json(), membersResponse.json(), contactsResponse.json()]); if (!remindersResponse.ok) throw new Error(remindersData.error || 'No se pudieron cargar los recordatorios'); setReminders(remindersData); if (membersResponse.ok) setMembers(membersData); if (contactsResponse.ok) setContacts(contactsData); } catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo cargar el módulo'); } finally { setLoading(false); } }, []);
   useEffect(() => { if (user) load(); }, [user, load]);
+  useEffect(() => {
+    if (!user) return;
+    const refreshBirthdays = () => { load(); };
+    window.addEventListener('shalom:members-updated', refreshBirthdays);
+    window.addEventListener('focus', refreshBirthdays);
+    return () => {
+      window.removeEventListener('shalom:members-updated', refreshBirthdays);
+      window.removeEventListener('focus', refreshBirthdays);
+    };
+  }, [user, load]);
   const activeCount = useMemo(() => reminders.filter(reminder => reminder.active).length, [reminders]);
   const recipientCount = useMemo(() => reminders.reduce((total, reminder) => total + normalizeRecipients(reminder.recipients).length, 0), [reminders]);
   const remove = async () => { if (!reminderPendingDeletion) return; setDeletingReminder(true); const response = await fetch(`/api/birthday-reminders/${reminderPendingDeletion.id}`, { method: 'DELETE' }); if (response.ok) { setReminders(current => current.filter(item => item.id !== reminderPendingDeletion.id)); setReminderPendingDeletion(null); } else { setError('No se pudo eliminar el recordatorio'); } setDeletingReminder(false); };
