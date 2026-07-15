@@ -1,0 +1,121 @@
+.character {
+  --character-scale: 1;
+  --skin: #f2b893;
+  --skin-shadow: #d78f6d;
+  --hair: #4a2c3b;
+  --outfit: #8b6ee5;
+  --outfit-dark: #6048b4;
+  position: relative;
+  width: calc(72px * var(--character-scale));
+  height: calc(112px * var(--character-scale));
+  flex: none;
+  filter: drop-shadow(0 10px 9px rgba(41, 27, 50, 0.2));
+  transform-origin: 50% 100%;
+}
+
+.small { --character-scale: .66; }
+.medium { --character-scale: .9; }
+.large { --character-scale: 1.22; }
+.hero { --character-scale: 1.5; }
+
+.character[data-skin='1'] { --skin: #ffd0ad; --skin-shadow: #e3a17c; }
+.character[data-skin='2'] { --skin: #cf8b65; --skin-shadow: #a9664e; }
+.character[data-skin='3'] { --skin: #8f593f; --skin-shadow: #6c402f; }
+.character[data-hair='1'] { --hair: #241f2d; }
+.character[data-hair='2'] { --hair: #77482e; }
+.character[data-hair='3'] { --hair: #bd7b38; }
+.character[data-outfit='sky'] { --outfit: #60b8e9; --outfit-dark: #397faf; }
+.character[data-outfit='mint'] { --outfit: #58cfa0; --outfit-dark: #2c9273; }
+.character[data-outfit='sunset'] { --outfit: #f28a6f; --outfit-dark: #b95856; }
+.character[data-outfit='rose'] { --outfit: #ef84b1; --outfit-dark: #af4f82; }
+
+.shadow {
+  position: absolute;
+  z-index: 0;
+  left: 15%;
+  right: 15%;
+  bottom: 0;
+  height: 10%;
+  border-radius: 50%;
+  background: rgba(52, 40, 67, .22);
+  filter: blur(2px);
+}
+
+.person {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  transform-origin: 50% 92%;
+}
+
+.walking .person { animation: bodyBob .52s ease-in-out infinite alternate; }
+.walking .shadow { animation: shadowPulse .52s ease-in-out infinite alternate; }
+
+.head {
+  position: absolute;
+  z-index: 5;
+  top: 7%;
+  left: 21%;
+  width: 58%;
+  height: 38%;
+  overflow: hidden;
+  border: calc(3px * var(--character-scale)) solid #4d334c;
+  border-radius: 46% 46% 43% 43%;
+  background: var(--skin);
+  box-shadow: inset 0 -5px 0 color-mix(in srgb, var(--skin-shadow) 25%, transparent), 0 3px 0 rgba(65, 42, 61, .12);
+}
+
+.avatarImage { position: absolute; inset: 0; z-index: 8; width: 100%; height: 100%; object-fit: cover; }
+.hairBack { position: absolute; z-index: 1; top: 2%; left: 15%; width: 70%; height: 44%; border-radius: 48% 48% 34% 34%; background: var(--hair); }
+.hairBack::after { position: absolute; left: -5%; top: 48%; width: 110%; height: 74%; border-radius: 28% 28% 42% 42%; background: var(--hair); content: ''; }
+.character[data-hair-shape='bun'] .hairBack::before { position: absolute; top: -28%; left: 31%; width: 38%; aspect-ratio: 1; border-radius: 50%; background: var(--hair); content: ''; }
+.character[data-hair-shape='short'] .hairBack::after { height: 36%; border-radius: 22%; }
+.character[data-hair-shape='side'] .hairBack { transform: rotate(-5deg); }
+
+.face { position: absolute; z-index: 3; inset: 26% 12% 8%; border-radius: 45%; background: var(--skin); }
+.eye { position: absolute; top: 34%; width: 10%; aspect-ratio: .78; border-radius: 50%; background: #332a3b; box-shadow: 0 -1px 0 rgba(255,255,255,.5) inset; }
+.eyeLeft { left: 22%; }
+.eyeRight { right: 22%; }
+.blush { position: absolute; top: 55%; width: 16%; height: 9%; border-radius: 50%; background: rgba(225, 92, 119, .28); filter: blur(.3px); }
+.blushLeft { left: 8%; }
+.blushRight { right: 8%; }
+.mouth { position: absolute; left: 43%; top: 59%; width: 16%; height: 9%; border-bottom: calc(2px * var(--character-scale)) solid #9b4f63; border-radius: 0 0 999px 999px; }
+
+.neck { position: absolute; z-index: 2; top: 40%; left: 43%; width: 14%; height: 11%; border-radius: 0 0 6px 6px; background: var(--skin-shadow); }
+.torso { position: absolute; z-index: 3; top: 46%; left: 24%; width: 52%; height: 36%; border: calc(3px * var(--character-scale)) solid #4d334c; border-radius: 30% 30% 20% 20%; background: linear-gradient(145deg, color-mix(in srgb, var(--outfit) 84%, white), var(--outfit)); box-shadow: inset 0 -7px 0 var(--outfit-dark), inset 4px 0 0 rgba(255,255,255,.12); }
+.collar { position: absolute; top: -3%; left: 24%; width: 52%; height: 19%; border-radius: 0 0 50% 50%; background: #fff5e8; border-bottom: 2px solid rgba(77, 51, 76, .2); }
+.heart { position: absolute; z-index: 2; top: 43%; left: 42%; width: 16%; aspect-ratio: 1; transform: rotate(45deg); border-radius: 2px; background: #fff0f6; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+.heart::before,.heart::after { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: inherit; content: ''; }
+.heart::before { left: -50%; }.heart::after { top: -50%; }
+
+.arm { position: absolute; z-index: 2; top: 51%; width: 16%; height: 32%; border: calc(3px * var(--character-scale)) solid #4d334c; border-radius: 999px; background: var(--outfit); transform-origin: 50% 10%; }
+.armLeft { left: 14%; transform: rotate(9deg); }
+.armRight { right: 14%; transform: rotate(-9deg); }
+.hand { position: absolute; left: 12%; bottom: -9%; width: 76%; aspect-ratio: 1; border: calc(2px * var(--character-scale)) solid #4d334c; border-radius: 50%; background: var(--skin); }
+.walking .armLeft { animation: armLeft .52s ease-in-out infinite alternate; }
+.walking .armRight { animation: armRight .52s ease-in-out infinite alternate; }
+
+.leg { position: absolute; z-index: 1; top: 77%; width: 19%; height: 20%; border: calc(3px * var(--character-scale)) solid #4d334c; border-radius: 0 0 999px 999px; background: #f7e4d3; transform-origin: 50% 4%; }
+.legLeft { left: 29%; }
+.legRight { right: 29%; }
+.shoe { position: absolute; bottom: -8%; width: 150%; height: 35%; border: calc(2px * var(--character-scale)) solid #4d334c; border-radius: 999px 999px 5px 5px; background: #5a4161; }
+.legLeft .shoe { right: -5%; }.legRight .shoe { left: -5%; }
+.walking .legLeft { animation: legLeft .52s ease-in-out infinite alternate; }
+.walking .legRight { animation: legRight .52s ease-in-out infinite alternate; }
+
+.sparkle { position: absolute; z-index: 9; width: 9%; aspect-ratio: 1; border-radius: 50%; background: #fff4a9; box-shadow: 0 0 9px #fff4a9; opacity: 0; }
+.sparkleOne { top: 7%; right: 2%; }.sparkleTwo { top: 29%; left: 1%; animation-delay: .6s !important; }
+.selected .sparkle,.celebrating .sparkle { animation: sparkle 1.2s ease-in-out infinite; }
+.selected { filter: drop-shadow(0 12px 14px rgba(121, 82, 218, .32)); }
+
+@keyframes bodyBob { to { transform: translateY(-3%) rotate(.8deg); } }
+@keyframes shadowPulse { to { transform: scaleX(.8); opacity: .6; } }
+@keyframes legLeft { from { transform: rotate(12deg); } to { transform: rotate(-13deg); } }
+@keyframes legRight { from { transform: rotate(-13deg); } to { transform: rotate(12deg); } }
+@keyframes armLeft { from { transform: rotate(15deg); } to { transform: rotate(-12deg); } }
+@keyframes armRight { from { transform: rotate(-12deg); } to { transform: rotate(15deg); } }
+@keyframes sparkle { 0%,100% { opacity: 0; transform: scale(.3); } 45% { opacity: 1; transform: scale(1.2); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .walking .person,.walking .shadow,.walking .armLeft,.walking .armRight,.walking .legLeft,.walking .legRight,.selected .sparkle,.celebrating .sparkle { animation: none; }
+}

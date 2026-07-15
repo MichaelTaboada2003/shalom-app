@@ -1,91 +1,71 @@
 'use client';
 
-import "./globals.css";
-import { usePathname, useRouter } from "next/navigation";
-import { CheckCircle2, Tent, Shield, LogOut } from "lucide-react";
-import { motion } from "framer-motion";
-import { AuthProvider, useAuth } from "@/lib/auth-context";
+import './globals.css';
+import { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { CakeSlice, Church, ClipboardCheck, HeartHandshake, LogOut, Shield, Tent, UsersRound } from 'lucide-react';
+import { AuthProvider, useAuth } from '@/lib/auth-context';
+import { getInitials } from '@/lib/community';
+
+const roleLabels = { admin: 'Administrador', leader: 'Líder', member: 'Miembro' } as const;
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, logout } = useAuth();
-
   const isLoginPage = pathname === '/login';
+  const canManageCommunity = user?.role === 'admin' || user?.role === 'leader';
+  const mustRedirect = !loading && (
+    (!user && !isLoginPage) ||
+    (user && isLoginPage) ||
+    (user?.role === 'member' && (pathname.startsWith('/retiro') || pathname.startsWith('/cumpleanios'))) ||
+    (user?.role !== 'admin' && pathname.startsWith('/admin'))
+  );
 
-  // Show nothing while checking auth
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-dvh">
-        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!mustRedirect) return;
+    if (!user) router.replace('/login');
+    else router.replace('/checklist');
+  }, [mustRedirect, router, user]);
 
-  // Redirect to login if not authenticated (except on login page)
-  if (!user && !isLoginPage) {
-    router.replace('/login');
-    return null;
-  }
-
-  // Redirect away from login if already authenticated
-  if (user && isLoginPage) {
-    router.replace('/checklist');
-    return null;
-  }
-
-  // Login page — no nav
-  if (isLoginPage) {
-    return <>{children}</>;
-  }
-
-  // Redirect members away from retiro routes
-  if (user?.role === 'member' && pathname.startsWith('/retiro')) {
-    router.replace('/checklist');
-    return null;
-  }
+  if (loading) return <div className="grid min-h-dvh place-items-center"><div className="loader" /></div>;
+  if (mustRedirect) return null;
+  if (isLoginPage) return <>{children}</>;
 
   const navItems = [
-    { href: '/checklist', label: 'Checklist', Icon: CheckCircle2 },
+    { href: '/checklist', label: 'Listas', Icon: ClipboardCheck },
+    { href: '/integrantes', label: 'Personas', Icon: UsersRound },
+    ...(canManageCommunity ? [{ href: '/cumpleanios', label: 'Cumples', Icon: CakeSlice }] : []),
+    { href: '/mundo', label: 'Mundo', Icon: Church },
     ...(user?.role !== 'member' ? [{ href: '/retiro', label: 'Retiro', Icon: Tent }] : []),
     ...(user?.role === 'admin' ? [{ href: '/admin', label: 'Admin', Icon: Shield }] : []),
   ];
 
   return (
-    <div className="flex flex-col min-h-dvh">
-      {/* Top bar */}
-      <header className="flex items-center justify-between px-4 pt-3 pb-1">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-text-muted">{user?.name}</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-accent-soft text-accent font-semibold uppercase tracking-wider">{user?.role}</span>
-        </div>
-        <button onClick={async () => { await logout(); router.push('/login'); }} className="p-2 rounded-lg text-text-muted hover:text-danger hover:bg-danger-soft transition-colors">
-          <LogOut size={16} />
+    <div className="app-shell flex min-h-dvh flex-col">
+      <a href="#main-content" className="skip-link">Saltar al contenido</a>
+      <header className="app-topbar">
+        <button onClick={() => router.push('/checklist')} className="brand-mark" aria-label="Ir a las listas">
+          <span className="brand-icon"><HeartHandshake size={18} /></span>
+          <span><b>Shalom</b><small>Comunidad viva</small></span>
         </button>
+        <div className="user-area">
+          <div className="user-pill">
+            <span className="user-avatar">{getInitials(user?.name ?? 'S')}</span>
+            <span className="user-copy"><b>{user?.name}</b><small>{user ? roleLabels[user.role] : ''}</small></span>
+          </div>
+          <button onClick={async () => { await logout(); router.push('/login'); }} className="icon-button" aria-label="Cerrar sesión"><LogOut size={17} /></button>
+        </div>
       </header>
-
-      <main className="flex-1 overflow-y-auto pb-20">
-        {children}
-      </main>
-
-      <nav className="fixed bottom-0 inset-x-0 z-50 flex justify-around items-end h-16 bg-bg-secondary/90 backdrop-blur-2xl border-t border-border-subtle" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <main id="main-content" className="relative z-10 flex-1 overflow-y-auto pb-24">{children}</main>
+      <nav aria-label="Navegación principal" className="app-nav">
         {navItems.map(({ href, label, Icon }) => {
           const isActive = pathname.startsWith(href);
           return (
-            <button
-              key={href}
-              onClick={() => router.push(href)}
-              className="relative flex flex-col items-center gap-0.5 pt-2 pb-1 px-5 transition-colors"
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="nav-pill"
-                  className="absolute -top-px left-3 right-3 h-0.5 rounded-full bg-accent"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
-              <Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} className={isActive ? 'text-accent' : 'text-text-muted'} />
-              <span className={`text-[10px] font-medium tracking-wide ${isActive ? 'text-accent' : 'text-text-muted'}`}>{label}</span>
+            <button key={href} onClick={() => router.push(href)} aria-current={isActive ? 'page' : undefined} className={`nav-item ${isActive ? 'nav-item-active' : ''}`}>
+              {isActive && <motion.span layoutId="active-nav" className="nav-active-orb" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />}
+              <Icon size={20} strokeWidth={isActive ? 2.4 : 1.8} /><span>{label}</span>
             </button>
           );
         })}
@@ -99,16 +79,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="es">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-        <meta name="theme-color" content="#0f0f1a" />
+        <meta name="theme-color" content="#120f21" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <title>Shalom App</title>
-        <meta name="description" content="App de herramientas para la comunidad Shalom" />
+        <meta name="description" content="La comunidad Shalom, organizada con cariño." />
       </head>
-      <body>
-        <AuthProvider>
-          <AppContent>{children}</AppContent>
-        </AuthProvider>
-      </body>
+      <body><AuthProvider><AppContent>{children}</AppContent></AuthProvider></body>
     </html>
   );
 }

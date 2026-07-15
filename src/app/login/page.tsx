@@ -1,12 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import logoShalom from '@/app/assets/logo-shalom.png';
 import { motion } from 'framer-motion';
-import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, HeartHandshake, Lock, LogIn, Mail, ShieldCheck, Sparkles, UsersRound } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import logoShalom from '@/app/assets/logo-shalom.png';
+import { CommunityCharacter, type CharacterProfile } from '@/components/community-character';
+import styles from './login.module.css';
+
+const demoCharacters: CharacterProfile[] = [
+  { id: 'login-ana', name: 'Ana', avatarStyle: 'lilac' },
+  { id: 'login-camila', name: 'Camila', avatarStyle: 'mint' },
+  { id: 'login-juliana', name: 'Juliana', avatarStyle: 'rose' },
+];
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -17,88 +25,40 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSubmitting(true);
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault(); setError(''); setSubmitting(true);
     const result = await login(email, password);
     setSubmitting(false);
-    if (result.error) {
-      setError(result.error);
-    } else {
-      router.push('/checklist');
-    }
+    if (result.error) setError(result.error);
+    else router.push('/checklist');
   };
+  const useDemo = () => { setEmail('seed.admin@shalom.test'); setPassword('Shalom2026!'); setError(''); };
 
   return (
-    <div className="min-h-dvh flex items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm"
-      >
-        <div className="text-center mb-8 flex flex-col items-center">
-          <Image src={logoShalom} alt="Shalom Logo" width={80} height={80} className="mb-4 object-contain drop-shadow-lg" />
-          <h1 className="text-3xl font-extrabold tracking-tight">Shalom</h1>
-          <p className="text-text-secondary text-sm mt-1">Inicia sesión para continuar</p>
+    <div className={styles.page}>
+      <section className={styles.story} aria-label="Bienvenida a Shalom">
+        <div className={styles.storyContent}>
+          <div className={styles.eyebrow}><HeartHandshake size={14} /> Comunidad que se siente cerca</div>
+          <h1>Organiza, cuida y celebra a <span>tu comunidad.</span></h1>
+          <p>Todo lo importante de Shalom en un mismo lugar: personas, cumpleaños, retiros y un pequeño mundo lleno de vida.</p>
+          <div className={styles.features}><span className={styles.feature}><UsersRound size={15} /> Perfiles con historia</span><span className={styles.feature}><Sparkles size={15} /> Mundo interactivo</span><span className={styles.feature}><ShieldCheck size={15} /> Acceso por roles</span></div>
+          <div className={styles.characters} aria-hidden="true">{demoCharacters.map(profile => <CommunityCharacter key={profile.id} profile={profile} size="hero" />)}</div>
         </div>
-
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 p-3 mb-4 rounded-xl bg-danger-soft border border-danger/20 text-danger text-sm"
-          >
-            <AlertCircle size={16} />
-            {error}
-          </motion.div>
-        )}
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="relative">
-            <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="Email"
-              required
-              className="w-full h-12 pl-10 pr-4 rounded-xl bg-bg-card border border-border-subtle text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent transition-colors"
-            />
-          </div>
-
-          <div className="relative">
-            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Contraseña"
-              required
-              className="w-full h-12 pl-10 pr-12 rounded-xl bg-bg-card border border-border-subtle text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent transition-colors"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors focus:outline-none"
-            >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="flex items-center justify-center gap-2 h-12 rounded-xl bg-accent text-white text-sm font-semibold disabled:opacity-50 hover:bg-accent/90 transition-all active:scale-[0.98] mt-1"
-          >
-            {submitting ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <><LogIn size={18} /> Iniciar Sesión</>
-            )}
-          </button>
-        </form>
-      </motion.div>
+      </section>
+      <main className={styles.loginSide}>
+        <motion.div className={styles.loginCard} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .35, ease: 'easeOut' }}>
+          <div className={styles.logoRow}><Image src={logoShalom} alt="Logo de Shalom" width={58} height={58} priority className={styles.logo} /><div><h2>Shalom</h2><p>Comunidad viva</p></div></div>
+          <div className={styles.welcome}><h1>Qué alegría verte</h1><p>Inicia sesión para volver a conectar con todo lo que están construyendo juntos.</p></div>
+          {error && <motion.div role="alert" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className={styles.error}><AlertCircle size={16} />{error}</motion.div>}
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <label className={styles.field}>Correo electrónico<span className={styles.inputWrap}><Mail size={16} /><input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="tu@correo.com" autoComplete="email" required /></span></label>
+            <label className={styles.field}>Contraseña<span className={styles.inputWrap}><Lock size={16} /><input type={showPassword ? 'text' : 'password'} value={password} onChange={event => setPassword(event.target.value)} placeholder="Tu contraseña" autoComplete="current-password" required /><button type="button" onClick={() => setShowPassword(current => !current)} className={styles.passwordToggle} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
+            <button type="submit" disabled={submitting} className={styles.submit}>{submitting ? <span className={styles.spinner} /> : <><LogIn size={17} /> Entrar a Shalom</>}</button>
+          </form>
+          <button type="button" onClick={useDemo} className={styles.demo}><Sparkles size={15} /> Usar cuenta demo</button>
+          <p className={styles.safe}><ShieldCheck size={12} /> Tus datos viajan protegidos y tu sesión es privada.</p>
+        </motion.div>
+      </main>
     </div>
   );
 }
