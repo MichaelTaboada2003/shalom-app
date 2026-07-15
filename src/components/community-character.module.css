@@ -18,9 +18,11 @@
 .large { --character-scale: 1.22; }
 .hero { --character-scale: 1.5; }
 
-.character[data-skin='1'] { --skin: #ffd0ad; --skin-shadow: #e3a17c; }
-.character[data-skin='2'] { --skin: #cf8b65; --skin-shadow: #a9664e; }
-.character[data-skin='3'] { --skin: #8f593f; --skin-shadow: #6c402f; }
+.character[data-skin='fair'] { --skin: #ffd9bf; --skin-shadow: #e5aa85; }
+.character[data-skin='light'] { --skin: #f4bd99; --skin-shadow: #d88f6c; }
+.character[data-skin='medium'] { --skin: #cf8b65; --skin-shadow: #a9664e; }
+.character[data-skin='tan'] { --skin: #af704e; --skin-shadow: #864a37; }
+.character[data-skin='deep'] { --skin: #7d4937; --skin-shadow: #573027; }
 .character[data-hair='1'] { --hair: #241f2d; }
 .character[data-hair='2'] { --hair: #77482e; }
 .character[data-hair='3'] { --hair: #bd7b38; }
@@ -65,12 +67,21 @@
   box-shadow: inset 0 -5px 0 color-mix(in srgb, var(--skin-shadow) 25%, transparent), 0 3px 0 rgba(65, 42, 61, .12);
 }
 
-.avatarImage { position: absolute; inset: 0; z-index: 8; width: 100%; height: 100%; object-fit: cover; }
 .hairBack { position: absolute; z-index: 1; top: 2%; left: 15%; width: 70%; height: 44%; border-radius: 48% 48% 34% 34%; background: var(--hair); }
 .hairBack::after { position: absolute; left: -5%; top: 48%; width: 110%; height: 74%; border-radius: 28% 28% 42% 42%; background: var(--hair); content: ''; }
-.character[data-hair-shape='bun'] .hairBack::before { position: absolute; top: -28%; left: 31%; width: 38%; aspect-ratio: 1; border-radius: 50%; background: var(--hair); content: ''; }
-.character[data-hair-shape='short'] .hairBack::after { height: 36%; border-radius: 22%; }
-.character[data-hair-shape='side'] .hairBack { transform: rotate(-5deg); }
+.character[data-gender='woman'] .hairBack { top:0; left:12%; width:76%; height:48%; border-radius:52% 52% 38% 38%; }
+.character[data-gender='woman'] .hairBack::after { left:-8%; top:42%; width:116%; height:94%; border-radius:30% 30% 44% 44%; }
+.character[data-hair-shape='waves'] .hairBack::after { background:radial-gradient(ellipse at 18% 20%,var(--hair) 0 27%,transparent 28%),radial-gradient(ellipse at 52% 13%,var(--hair) 0 29%,transparent 30%),radial-gradient(ellipse at 84% 25%,var(--hair) 0 27%,transparent 28%),var(--hair); }
+.character[data-hair-shape='long'] .hairBack::after { top:34%; height:112%; border-radius:26% 26% 46% 46%; }
+.character[data-hair-shape='bun'] .hairBack::before { position:absolute; top:-31%; left:30%; width:40%; aspect-ratio:1; border-radius:50%; background:var(--hair); box-shadow:0 2px 0 rgba(0,0,0,.14) inset; content:''; }
+.character[data-hair-shape='braids'] .hairBack::after { left:-15%; top:39%; width:130%; height:116%; background:radial-gradient(circle at 13% 19%,var(--hair) 0 10%,transparent 11%),radial-gradient(circle at 13% 38%,var(--hair) 0 10%,transparent 11%),radial-gradient(circle at 13% 57%,var(--hair) 0 10%,transparent 11%),radial-gradient(circle at 87% 19%,var(--hair) 0 10%,transparent 11%),radial-gradient(circle at 87% 38%,var(--hair) 0 10%,transparent 11%),radial-gradient(circle at 87% 57%,var(--hair) 0 10%,transparent 11%),var(--hair); }
+.character[data-gender='man'] .hairBack { top:4%; left:17%; width:66%; height:34%; border-radius:52% 52% 24% 24%; }
+.character[data-gender='man'] .hairBack::after { top:62%; height:26%; border-radius:0 0 28% 28%; }
+.character[data-hair-shape='short'] .hairBack { height:29%; }
+.character[data-hair-shape='fade'] .hairBack { top:8%; height:27%; border-radius:56% 56% 16% 16%; }
+.character[data-hair-shape='fade'] .hairBack::after { height:13%; opacity:.74; }
+.character[data-hair-shape='curls'] .hairBack { top:0; height:37%; background:radial-gradient(circle at 20% 40%,var(--hair) 0 23%,transparent 24%),radial-gradient(circle at 50% 18%,var(--hair) 0 26%,transparent 27%),radial-gradient(circle at 80% 41%,var(--hair) 0 23%,transparent 24%),var(--hair); }
+.character[data-hair-shape='side'] .hairBack { transform:rotate(-7deg); }
 
 .face { position: absolute; z-index: 3; inset: 26% 12% 8%; border-radius: 45%; background: var(--skin); }
 .eye { position: absolute; top: 34%; width: 10%; aspect-ratio: .78; border-radius: 50%; background: #332a3b; box-shadow: 0 -1px 0 rgba(255,255,255,.5) inset; }

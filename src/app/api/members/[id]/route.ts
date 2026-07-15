@@ -11,8 +11,8 @@ export async function GET(_request: Request, { params }: Context) {
     const { id } = await params;
     const sql = getDb();
     const rows = await sql`
-      SELECT id, full_name, email, phone, birth_date, avatar_url, avatar_style,
-             ministry, bio, status, created_at, updated_at
+      SELECT id, full_name, email, phone, birth_date, avatar_style, avatar_gender,
+             avatar_skin_tone, avatar_hair_style, ministry, bio, status, created_at, updated_at
       FROM members WHERE id = ${id}
     `;
     if (!rows[0]) return NextResponse.json({ error: 'Integrante no encontrado' }, { status: 404 });
@@ -35,11 +35,13 @@ export async function PATCH(request: Request, { params }: Context) {
     const rows = await sql`
       UPDATE members SET
         full_name = ${input.fullName}, email = ${input.email}, phone = ${input.phone},
-        birth_date = ${input.birthDate}, avatar_url = ${input.avatarUrl}, avatar_style = ${input.avatarStyle},
-        ministry = ${input.ministry}, bio = ${input.bio}, status = ${input.status}, updated_at = now()
+        birth_date = ${input.birthDate}, avatar_style = ${input.avatarStyle},
+        avatar_gender = ${input.avatarGender}, avatar_skin_tone = ${input.avatarSkinTone},
+        avatar_hair_style = ${input.avatarHairStyle}, ministry = ${input.ministry}, bio = ${input.bio},
+        status = ${input.status}, updated_at = now()
       WHERE id = ${id}
-      RETURNING id, full_name, email, phone, birth_date, avatar_url, avatar_style,
-                ministry, bio, status, created_at, updated_at
+      RETURNING id, full_name, email, phone, birth_date, avatar_style, avatar_gender,
+                avatar_skin_tone, avatar_hair_style, ministry, bio, status, created_at, updated_at
     `;
     if (!rows[0]) return NextResponse.json({ error: 'Integrante no encontrado' }, { status: 404 });
     return NextResponse.json(rows[0]);

@@ -1,14 +1,13 @@
-'use client';
-
-import { useState } from 'react';
-import type { AvatarStyle, Member } from '@/lib/community';
+import type { AvatarGender, AvatarHairStyle, AvatarSkinTone, AvatarStyle, Member } from '@/lib/community';
 import styles from './community-character.module.css';
 
 export interface CharacterProfile {
   id: string;
   name: string;
   avatarStyle: AvatarStyle | string;
-  avatarUrl?: string | null;
+  avatarGender: AvatarGender;
+  avatarSkinTone: AvatarSkinTone;
+  avatarHairStyle: AvatarHairStyle;
 }
 
 interface CommunityCharacterProps {
@@ -27,23 +26,26 @@ function hash(value: string): number {
 }
 
 export function profileFromMember(member: Member): CharacterProfile {
-  return { id: member.id, name: member.full_name, avatarStyle: member.avatar_style, avatarUrl: member.avatar_url };
+  return {
+    id: member.id,
+    name: member.full_name,
+    avatarStyle: member.avatar_style,
+    avatarGender: member.avatar_gender ?? 'woman',
+    avatarSkinTone: member.avatar_skin_tone ?? 'medium',
+    avatarHairStyle: member.avatar_hair_style ?? 'waves',
+  };
 }
 
 export function CommunityCharacter({ profile, size = 'medium', walking = false, selected = false, celebrating = false, className = '' }: CommunityCharacterProps) {
-  const [imageFailed, setImageFailed] = useState(false);
   const seed = hash(profile.id || profile.name);
-  const skin = seed % 4;
-  const hair = Math.floor(seed / 5) % 4;
-  const hairShape = ['waves', 'bun', 'short', 'side'][Math.floor(seed / 11) % 4];
-  const showImage = Boolean(profile.avatarUrl && !imageFailed);
 
   return (
     <div
       className={`${styles.character} ${styles[size]} ${walking ? styles.walking : ''} ${selected ? styles.selected : ''} ${celebrating ? styles.celebrating : ''} ${className}`}
-      data-skin={skin}
-      data-hair={hair}
-      data-hair-shape={hairShape}
+      data-skin={profile.avatarSkinTone}
+      data-hair={seed % 4}
+      data-hair-shape={profile.avatarHairStyle}
+      data-gender={profile.avatarGender}
       data-outfit={profile.avatarStyle || 'lilac'}
       aria-hidden="true"
     >
@@ -56,21 +58,13 @@ export function CommunityCharacter({ profile, size = 'medium', walking = false, 
         <span className={styles.torso}><span className={styles.collar} /><span className={styles.heart} /></span>
         <span className={`${styles.leg} ${styles.legLeft}`}><span className={styles.shoe} /></span>
         <span className={`${styles.leg} ${styles.legRight}`}><span className={styles.shoe} /></span>
-        <span className={styles.head}>
-          {showImage ? (
-            // Arbitrary user-provided avatar hosts cannot be declared in next/image remotePatterns.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={profile.avatarUrl ?? ''} alt="" className={styles.avatarImage} onError={() => setImageFailed(true)} />
-          ) : (
-            <span className={styles.face}>
-              <span className={`${styles.eye} ${styles.eyeLeft}`} />
-              <span className={`${styles.eye} ${styles.eyeRight}`} />
-              <span className={`${styles.blush} ${styles.blushLeft}`} />
-              <span className={`${styles.blush} ${styles.blushRight}`} />
-              <span className={styles.mouth} />
-            </span>
-          )}
-        </span>
+        <span className={styles.head}><span className={styles.face}>
+          <span className={`${styles.eye} ${styles.eyeLeft}`} />
+          <span className={`${styles.eye} ${styles.eyeRight}`} />
+          <span className={`${styles.blush} ${styles.blushLeft}`} />
+          <span className={`${styles.blush} ${styles.blushRight}`} />
+          <span className={styles.mouth} />
+        </span></span>
       </span>
       <span className={`${styles.sparkle} ${styles.sparkleOne}`} />
       <span className={`${styles.sparkle} ${styles.sparkleTwo}`} />

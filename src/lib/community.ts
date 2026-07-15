@@ -1,5 +1,15 @@
 export const AVATAR_STYLES = ['lilac', 'sky', 'mint', 'sunset', 'rose'] as const;
 export type AvatarStyle = (typeof AVATAR_STYLES)[number];
+export const AVATAR_GENDERS = ['woman', 'man'] as const;
+export type AvatarGender = (typeof AVATAR_GENDERS)[number];
+export const AVATAR_SKIN_TONES = ['fair', 'light', 'medium', 'tan', 'deep'] as const;
+export type AvatarSkinTone = (typeof AVATAR_SKIN_TONES)[number];
+export const AVATAR_HAIR_STYLES = ['waves', 'long', 'bun', 'braids', 'short', 'fade', 'curls', 'side'] as const;
+export type AvatarHairStyle = (typeof AVATAR_HAIR_STYLES)[number];
+export const HAIR_STYLES_BY_GENDER: Record<AvatarGender, readonly AvatarHairStyle[]> = {
+  woman: ['waves', 'long', 'bun', 'braids'],
+  man: ['short', 'fade', 'curls', 'side'],
+};
 export type MemberStatus = 'active' | 'inactive';
 
 export interface Member {
@@ -8,8 +18,10 @@ export interface Member {
   email: string | null;
   phone: string | null;
   birth_date: string | null;
-  avatar_url: string | null;
   avatar_style: AvatarStyle;
+  avatar_gender: AvatarGender;
+  avatar_skin_tone: AvatarSkinTone;
+  avatar_hair_style: AvatarHairStyle;
   ministry: string | null;
   bio: string | null;
   status: MemberStatus;
@@ -22,8 +34,10 @@ export interface MemberInput {
   email: string | null;
   phone: string | null;
   birthDate: string | null;
-  avatarUrl: string | null;
   avatarStyle: AvatarStyle;
+  avatarGender: AvatarGender;
+  avatarSkinTone: AvatarSkinTone;
+  avatarHairStyle: AvatarHairStyle;
   ministry: string | null;
   bio: string | null;
   status: MemberStatus;
@@ -50,19 +64,18 @@ export function parseMemberInput(body: unknown): { value?: MemberInput; error?: 
   const birthDate = nullableText(record.birthDate, 10);
   if (birthDate && !DATE_RE.test(birthDate)) return { error: 'La fecha de cumpleaños no es válida' };
 
-  const avatarUrl = nullableText(record.avatarUrl, 2048);
-  if (avatarUrl) {
-    try {
-      const parsed = new URL(avatarUrl);
-      if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
-    } catch {
-      return { error: 'La URL del avatar no es válida' };
-    }
-  }
-
   const avatarStyle = AVATAR_STYLES.includes(record.avatarStyle as AvatarStyle)
     ? (record.avatarStyle as AvatarStyle)
     : 'lilac';
+  const avatarGender = AVATAR_GENDERS.includes(record.avatarGender as AvatarGender)
+    ? (record.avatarGender as AvatarGender)
+    : 'woman';
+  const avatarSkinTone = AVATAR_SKIN_TONES.includes(record.avatarSkinTone as AvatarSkinTone)
+    ? (record.avatarSkinTone as AvatarSkinTone)
+    : 'medium';
+  const avatarHairStyle = HAIR_STYLES_BY_GENDER[avatarGender].includes(record.avatarHairStyle as AvatarHairStyle)
+    ? (record.avatarHairStyle as AvatarHairStyle)
+    : HAIR_STYLES_BY_GENDER[avatarGender][0];
   const status: MemberStatus = record.status === 'inactive' ? 'inactive' : 'active';
 
   return {
@@ -71,8 +84,10 @@ export function parseMemberInput(body: unknown): { value?: MemberInput; error?: 
       email: email?.toLowerCase() ?? null,
       phone: nullableText(record.phone, 40),
       birthDate,
-      avatarUrl,
       avatarStyle,
+      avatarGender,
+      avatarSkinTone,
+      avatarHairStyle,
       ministry: nullableText(record.ministry, 100),
       bio: nullableText(record.bio, 1200),
       status,

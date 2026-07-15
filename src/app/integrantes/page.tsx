@@ -7,20 +7,31 @@ import {
   Pencil, Phone, Plus, Search, ShieldCheck, Sparkles, Trash2, UsersRound, X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { AVATAR_STYLES, type AvatarStyle, type Member, type MemberStatus } from '@/lib/community';
+import {
+  AVATAR_SKIN_TONES, AVATAR_STYLES, HAIR_STYLES_BY_GENDER,
+  type AvatarGender, type AvatarHairStyle, type AvatarSkinTone, type AvatarStyle, type Member, type MemberStatus,
+} from '@/lib/community';
 import { CommunityCharacter, profileFromMember, type CharacterProfile } from '@/components/community-character';
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import styles from './integrantes.module.css';
 
 const avatarLabels: Record<AvatarStyle, string> = { lilac: 'Lila', sky: 'Cielo', mint: 'Menta', sunset: 'Sol', rose: 'Rosa' };
 const swatchClasses: Record<AvatarStyle, string> = { lilac: styles.swatchLilac, sky: styles.swatchSky, mint: styles.swatchMint, sunset: styles.swatchSunset, rose: styles.swatchRose };
+const genderLabels: Record<AvatarGender, string> = { woman: 'Mujer', man: 'Hombre' };
+const skinLabels: Record<AvatarSkinTone, string> = { fair: 'Clara', light: 'Suave', medium: 'Media', tan: 'Canela', deep: 'Oscura' };
+const hairLabels: Record<AvatarHairStyle, string> = { waves: 'Ondas', long: 'Largo', bun: 'Moño', braids: 'Trenzas', short: 'Corto', fade: 'Degradado', curls: 'Rizos', side: 'Lateral' };
 const inputClass = 'w-full h-12 rounded-2xl border border-border-subtle bg-bg-primary/70 px-4 text-sm text-text-primary outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/10 placeholder:text-text-muted';
 type Filter = 'all' | 'active' | 'birthdays';
-type FormState = { fullName: string; email: string; phone: string; birthDate: string; avatarUrl: string; avatarStyle: AvatarStyle; ministry: string; bio: string; status: MemberStatus; };
-const emptyForm: FormState = { fullName: '', email: '', phone: '', birthDate: '', avatarUrl: '', avatarStyle: 'lilac', ministry: '', bio: '', status: 'active' };
+type FormState = { fullName: string; email: string; phone: string; birthDate: string; avatarStyle: AvatarStyle; avatarGender: AvatarGender; avatarSkinTone: AvatarSkinTone; avatarHairStyle: AvatarHairStyle; ministry: string; bio: string; status: MemberStatus; };
+const emptyForm: FormState = { fullName: '', email: '', phone: '', birthDate: '', avatarStyle: 'lilac', avatarGender: 'woman', avatarSkinTone: 'medium', avatarHairStyle: 'waves', ministry: '', bio: '', status: 'active' };
 
 function toForm(member?: Member | null): FormState {
   if (!member) return emptyForm;
-  return { fullName: member.full_name, email: member.email ?? '', phone: member.phone ?? '', birthDate: member.birth_date?.slice(0, 10) ?? '', avatarUrl: member.avatar_url ?? '', avatarStyle: member.avatar_style ?? 'lilac', ministry: member.ministry ?? '', bio: member.bio ?? '', status: member.status };
+  return {
+    fullName: member.full_name, email: member.email ?? '', phone: member.phone ?? '', birthDate: member.birth_date?.slice(0, 10) ?? '',
+    avatarStyle: member.avatar_style ?? 'lilac', avatarGender: member.avatar_gender ?? 'woman', avatarSkinTone: member.avatar_skin_tone ?? 'medium', avatarHairStyle: member.avatar_hair_style ?? 'waves',
+    ministry: member.ministry ?? '', bio: member.bio ?? '', status: member.status,
+  };
 }
 
 function formatBirthday(value?: string | null) {
@@ -47,7 +58,21 @@ function MemberForm({ member, onClose, onSaved }: { member?: Member | null; onCl
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm(current => ({ ...current, [key]: value }));
-  const preview: CharacterProfile = { id: member?.id ?? `preview-${form.fullName || 'shalom'}`, name: form.fullName || 'Nuevo integrante', avatarStyle: form.avatarStyle, avatarUrl: form.avatarUrl };
+  const updateGender = (avatarGender: AvatarGender) => setForm(current => ({
+    ...current,
+    avatarGender,
+    avatarHairStyle: HAIR_STYLES_BY_GENDER[avatarGender].includes(current.avatarHairStyle)
+      ? current.avatarHairStyle
+      : HAIR_STYLES_BY_GENDER[avatarGender][0],
+  }));
+  const preview: CharacterProfile = {
+    id: member?.id ?? `preview-${form.fullName || 'shalom'}`,
+    name: form.fullName || 'Nuevo integrante',
+    avatarStyle: form.avatarStyle,
+    avatarGender: form.avatarGender,
+    avatarSkinTone: form.avatarSkinTone,
+    avatarHairStyle: form.avatarHairStyle,
+  };
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); setSaving(true); setError('');
@@ -76,7 +101,9 @@ function MemberForm({ member, onClose, onSaved }: { member?: Member | null; onCl
             <label className="form-label">Teléfono<input value={form.phone} onChange={event => update('phone', event.target.value)} className={inputClass} placeholder="300 000 0000" /></label>
             <label className="form-label">Cumpleaños<input type="date" value={form.birthDate} onChange={event => update('birthDate', event.target.value)} className={inputClass} /></label>
             <label className="form-label">Servicio o grupo<input value={form.ministry} onChange={event => update('ministry', event.target.value)} className={inputClass} placeholder="Música, acogida…" /></label>
-            <label className={`form-label ${styles.wide}`}>URL del avatar <span className="font-normal text-text-muted">(opcional)</span><input type="url" value={form.avatarUrl} onChange={event => update('avatarUrl', event.target.value)} className={inputClass} placeholder="https://…" /></label>
+            <div className={styles.wide}><span className="form-label-text">Su personaje</span><p className={styles.appearanceHelp}>Elige sus rasgos para que se reconozca en Mundo Shalom.</p><div className={styles.genderChoices}>{(['woman', 'man'] as const).map(gender => <button key={gender} type="button" onClick={() => updateGender(gender)} className={`${styles.genderChoice} ${form.avatarGender === gender ? styles.styleChoiceActive : ''}`} aria-pressed={form.avatarGender === gender}><span className={styles.genderPortrait} data-gender={gender} />{genderLabels[gender]}</button>)}</div></div>
+            <div className={styles.wide}><span className="form-label-text">Tono de piel</span><div className={styles.toneChoices}>{AVATAR_SKIN_TONES.map(tone => <button key={tone} type="button" onClick={() => update('avatarSkinTone', tone)} className={`${styles.toneChoice} ${form.avatarSkinTone === tone ? styles.styleChoiceActive : ''}`} aria-pressed={form.avatarSkinTone === tone}><span className={styles.skinSwatch} data-skin={tone} />{skinLabels[tone]}</button>)}</div></div>
+            <div className={styles.wide}><span className="form-label-text">Peinado</span><div className={styles.hairChoices}>{HAIR_STYLES_BY_GENDER[form.avatarGender].map(hair => <button key={hair} type="button" onClick={() => update('avatarHairStyle', hair)} className={`${styles.hairChoice} ${form.avatarHairStyle === hair ? styles.styleChoiceActive : ''}`} aria-pressed={form.avatarHairStyle === hair}><span className={styles.hairSwatch} data-hair={hair} />{hairLabels[hair]}</button>)}</div></div>
             <div className={styles.wide}><span className="form-label-text">Color de su personaje</span><div className={styles.styleChoices}>{AVATAR_STYLES.map(style => <button key={style} type="button" onClick={() => update('avatarStyle', style)} className={`${styles.styleChoice} ${form.avatarStyle === style ? styles.styleChoiceActive : ''}`} aria-pressed={form.avatarStyle === style}><span className={`${styles.styleSwatch} ${swatchClasses[style]}`} />{avatarLabels[style]}</button>)}</div></div>
             <label className={`form-label ${styles.wide}`}>Lo que le hace especial<textarea value={form.bio} onChange={event => update('bio', event.target.value)} className={`${inputClass} h-28 py-3`} placeholder="Talentos, forma de servir, una historia bonita…" /></label>
             {member && <label className={`form-label ${styles.wide}`}>Estado<select value={form.status} onChange={event => update('status', event.target.value as MemberStatus)} className={inputClass}><option value="active">Activo en la comunidad</option><option value="inactive">Inactivo</option></select></label>}
@@ -115,6 +142,8 @@ export default function IntegrantesPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [selected, setSelected] = useState<Member | null>(null);
   const [editing, setEditing] = useState<Member | null | undefined>(undefined);
+  const [memberPendingDeletion, setMemberPendingDeletion] = useState<Member | null>(null);
+  const [deletingMember, setDeletingMember] = useState(false);
   const [error, setError] = useState('');
   const canManage = user?.role === 'admin' || user?.role === 'leader';
 
@@ -145,11 +174,12 @@ export default function IntegrantesPage() {
     setMembers(current => current.some(member => member.id === saved.id) ? current.map(member => member.id === saved.id ? saved : member) : [saved, ...current]);
     setSelected(current => current?.id === saved.id ? saved : current);
   };
-  const removeMember = async (member: Member) => {
-    if (!window.confirm(`¿Eliminar a ${member.full_name}? También se eliminarán sus recordatorios.`)) return;
-    const response = await fetch(`/api/members/${member.id}`, { method: 'DELETE' });
-    if (!response.ok) { const data = await response.json(); setError(data.error || 'No se pudo eliminar'); return; }
-    setMembers(current => current.filter(item => item.id !== member.id)); setSelected(null);
+  const removeMember = async () => {
+    if (!memberPendingDeletion) return;
+    setDeletingMember(true);
+    const response = await fetch(`/api/members/${memberPendingDeletion.id}`, { method: 'DELETE' });
+    if (!response.ok) { const data = await response.json(); setError(data.error || 'No se pudo eliminar'); setDeletingMember(false); return; }
+    setMembers(current => current.filter(item => item.id !== memberPendingDeletion.id)); setSelected(null); setMemberPendingDeletion(null); setDeletingMember(false);
   };
 
   return (
@@ -178,8 +208,9 @@ export default function IntegrantesPage() {
       <AnimatePresence>{editing !== undefined && <MemberForm key={editing?.id ?? 'new'} member={editing} onClose={() => setEditing(undefined)} onSaved={saveMember} />}</AnimatePresence>
       <AnimatePresence>{selected && <><motion.button className={styles.overlay} aria-label="Cerrar detalle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelected(null)} /><motion.aside className={styles.detail} initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 240, damping: 28 }}>
         <div className={styles.detailHero}><button onClick={() => setSelected(null)} className={styles.close} aria-label="Cerrar"><X size={18} /></button><CommunityCharacter profile={profileFromMember(selected)} size="hero" selected className={styles.detailCharacter} /></div>
-        <div className={styles.detailContent}><div className={styles.detailHeading}><div><h2>{selected.full_name}</h2><p>{selected.ministry || 'Comunidad Shalom'}</p></div>{selected.status === 'active' && <span className={styles.activeBadge}><BadgeCheck size={12} /> Activo</span>}</div><p className={styles.detailBio}>{selected.bio || 'Esta persona hace parte de la familia Shalom.'}</p><div className={styles.details}><div className={styles.detailItem}><CalendarDays size={17} /><span><small>Cumpleaños</small>{formatBirthday(selected.birth_date)}</span></div>{selected.email && <a className={styles.detailItem} href={`mailto:${selected.email}`}><Mail size={17} /><span><small>Correo</small>{selected.email}</span></a>}{selected.phone && <a className={styles.detailItem} href={`tel:${selected.phone}`}><Phone size={17} /><span><small>Teléfono</small>{selected.phone}</span></a>}<div className={styles.detailItem}><MapPin size={17} /><span><small>Servicio</small>{selected.ministry || 'Comunidad'}</span></div></div>{canManage && <div className={styles.detailActions}><button onClick={() => { setEditing(selected); setSelected(null); }} className="secondary-button"><Pencil size={16} /> Editar</button><button onClick={() => removeMember(selected)} className="danger-button"><Trash2 size={16} /> Eliminar</button></div>}<div className={styles.privacy}><ShieldCheck size={14} /> Este perfil no crea acceso ni contraseña.</div></div>
+        <div className={styles.detailContent}><div className={styles.detailHeading}><div><h2>{selected.full_name}</h2><p>{selected.ministry || 'Comunidad Shalom'}</p></div>{selected.status === 'active' && <span className={styles.activeBadge}><BadgeCheck size={12} /> Activo</span>}</div><p className={styles.detailBio}>{selected.bio || 'Esta persona hace parte de la familia Shalom.'}</p><div className={styles.details}><div className={styles.detailItem}><CalendarDays size={17} /><span><small>Cumpleaños</small>{formatBirthday(selected.birth_date)}</span></div>{selected.email && <a className={styles.detailItem} href={`mailto:${selected.email}`}><Mail size={17} /><span><small>Correo</small>{selected.email}</span></a>}{selected.phone && <a className={styles.detailItem} href={`tel:${selected.phone}`}><Phone size={17} /><span><small>Teléfono</small>{selected.phone}</span></a>}<div className={styles.detailItem}><MapPin size={17} /><span><small>Servicio</small>{selected.ministry || 'Comunidad'}</span></div></div>{canManage && <div className={styles.detailActions}><button onClick={() => { setEditing(selected); setSelected(null); }} className="secondary-button"><Pencil size={16} /> Editar</button><button onClick={() => setMemberPendingDeletion(selected)} className="danger-button"><Trash2 size={16} /> Eliminar</button></div>}<div className={styles.privacy}><ShieldCheck size={14} /> Este perfil no crea acceso ni contraseña.</div></div>
       </motion.aside></>}</AnimatePresence>
+      <ConfirmDeleteDialog open={Boolean(memberPendingDeletion)} title="¿Eliminar este integrante?" description={<>Vas a eliminar a <b className="text-text-primary">{memberPendingDeletion?.full_name}</b> y sus recordatorios asociados. Esta acción no se puede deshacer.</>} onCancel={() => setMemberPendingDeletion(null)} onConfirm={removeMember} loading={deletingMember} />
     </div>
   );
 }

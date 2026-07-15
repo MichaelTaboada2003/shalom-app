@@ -8,8 +8,8 @@ export async function GET() {
     await requireAuth();
     const sql = getDb();
     const rows = await sql`
-      SELECT id, full_name, email, phone, birth_date, avatar_url, avatar_style,
-             ministry, bio, status, created_at, updated_at
+      SELECT id, full_name, email, phone, birth_date, avatar_style, avatar_gender,
+             avatar_skin_tone, avatar_hair_style, ministry, bio, status, created_at, updated_at
       FROM members
       ORDER BY status ASC, full_name ASC
     `;
@@ -30,13 +30,15 @@ export async function POST(request: Request) {
     const sql = getDb();
     const rows = await sql`
       INSERT INTO members (
-        full_name, email, phone, birth_date, avatar_url, avatar_style, ministry, bio, status
+        full_name, email, phone, birth_date, avatar_style, avatar_gender,
+        avatar_skin_tone, avatar_hair_style, ministry, bio, status
       ) VALUES (
-        ${input.fullName}, ${input.email}, ${input.phone}, ${input.birthDate}, ${input.avatarUrl},
-        ${input.avatarStyle}, ${input.ministry}, ${input.bio}, ${input.status}
+        ${input.fullName}, ${input.email}, ${input.phone}, ${input.birthDate}, ${input.avatarStyle},
+        ${input.avatarGender}, ${input.avatarSkinTone}, ${input.avatarHairStyle},
+        ${input.ministry}, ${input.bio}, ${input.status}
       )
-      RETURNING id, full_name, email, phone, birth_date, avatar_url, avatar_style,
-                ministry, bio, status, created_at, updated_at
+      RETURNING id, full_name, email, phone, birth_date, avatar_style, avatar_gender,
+                avatar_skin_tone, avatar_hair_style, ministry, bio, status, created_at, updated_at
     `;
     return NextResponse.json(rows[0], { status: 201 });
   } catch (error) {
