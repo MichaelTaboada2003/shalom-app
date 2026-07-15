@@ -1,5 +1,6 @@
 import { AuthError, requireAuth } from '@/lib/auth';
 import { parseMemberInput } from '@/lib/community';
+import { createDefaultBirthdayReminder } from '@/lib/default-birthday-reminder';
 import { getDb } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
@@ -25,7 +26,7 @@ export async function GET(_request: Request, { params }: Context) {
 
 export async function PATCH(request: Request, { params }: Context) {
   try {
-    await requireAuth(['admin', 'leader']);
+    const user = await requireAuth(['admin', 'leader']);
     const { id } = await params;
     const parsed = parseMemberInput(await request.json());
     if (!parsed.value) return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -43,8 +44,12 @@ export async function PATCH(request: Request, { params }: Context) {
       RETURNING id, full_name, email, phone, birth_date, avatar_style, avatar_gender,
                 avatar_skin_tone, avatar_hair_style, ministry, bio, status, created_at, updated_at
     `;
-    if (!rows[0]) return NextResponse.json({ error: 'Integrante no encontrado' }, { status: 404 });
-    return NextResponse.json(rows[0]);
+    const member = rows[0];
+    if (!member) return NextResponse.json({ error: 'Integrante no encontrado' }, { status: 404 });
+    const defaultReminder = input.birthDate
+      ? await createDefaultBirthdayReminder({ id: member.id, fullName: member.full_name }, user)
+      : null;
+    return NextResponse.json({ ...member, defaultReminderCreated: Boolean(defaultReminder) });
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: error.status });
     return NextResponse.json({ error: 'No fue posible actualizar el integrante' }, { status: 500 });

@@ -1,5 +1,6 @@
 import { AuthError, requireAuth } from '@/lib/auth';
 import { parseMemberInput } from '@/lib/community';
+import { createDefaultBirthdayReminder } from '@/lib/default-birthday-reminder';
 import { getDb } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
@@ -22,7 +23,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireAuth(['admin', 'leader']);
+    const user = await requireAuth(['admin', 'leader']);
     const parsed = parseMemberInput(await request.json());
     if (!parsed.value) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
@@ -40,7 +41,11 @@ export async function POST(request: Request) {
       RETURNING id, full_name, email, phone, birth_date, avatar_style, avatar_gender,
                 avatar_skin_tone, avatar_hair_style, ministry, bio, status, created_at, updated_at
     `;
-    return NextResponse.json(rows[0], { status: 201 });
+    const member = rows[0];
+    const defaultReminder = input.birthDate
+      ? await createDefaultBirthdayReminder({ id: member.id, fullName: member.full_name }, user)
+      : null;
+    return NextResponse.json({ ...member, defaultReminderCreated: Boolean(defaultReminder) }, { status: 201 });
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: error.status });
     return NextResponse.json({ error: 'No fue posible crear el integrante' }, { status: 500 });
