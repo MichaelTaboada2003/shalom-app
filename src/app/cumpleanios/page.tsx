@@ -51,6 +51,7 @@ function BirthdayCalendar({ members }: { members: Member[] }) {
   const today = new Date();
   const [month, setMonth] = useState(() => new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
   const monthKey = month.toISOString().slice(0, 7);
   const monthLabel = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(month);
   const { daysInMonth, startOffset, birthdaysByDay } = useMemo(() => {
@@ -87,25 +88,32 @@ function BirthdayCalendar({ members }: { members: Member[] }) {
     <section className="birthday-calendar" aria-labelledby="birthday-calendar-title">
       <header className="birthday-calendar-header">
         <div><div className="eyebrow"><CalendarDays size={14} /> Calendario de la comunidad</div><h2 id="birthday-calendar-title">Cumpleaños del mes</h2><p>Explora las fechas destacadas para conocer a quién celebramos.</p></div>
-        <div className="birthday-calendar-navigation"><button type="button" onClick={() => changeMonth(-1)} className="icon-button" aria-label="Mes anterior"><ChevronLeft size={18} /></button><strong>{monthLabel}</strong><button type="button" onClick={() => changeMonth(1)} className="icon-button" aria-label="Mes siguiente"><ChevronRight size={18} /></button></div>
+        <div className="birthday-calendar-actions">
+          {!collapsed && <div className="birthday-calendar-navigation"><button type="button" onClick={() => changeMonth(-1)} className="icon-button" aria-label="Mes anterior"><ChevronLeft size={18} /></button><strong>{monthLabel}</strong><button type="button" onClick={() => changeMonth(1)} className="icon-button" aria-label="Mes siguiente"><ChevronRight size={18} /></button></div>}
+          <button type="button" onClick={() => setCollapsed(current => !current)} className="birthday-calendar-toggle" aria-expanded={!collapsed} aria-controls="birthday-calendar-content"><span>{collapsed ? `Abrir ${monthLabel}` : 'Reducir'}</span><ChevronDown size={16} className={collapsed ? '' : 'rotate-180'} /></button>
+        </div>
       </header>
-      <div className="birthday-calendar-weekdays" aria-hidden="true">{WEEK_DAYS.map(day => <span key={day}>{day}</span>)}</div>
-      <div className="birthday-calendar-grid">
-        {Array.from({ length: totalCells }, (_, index) => {
-          const day = index - startOffset + 1;
-          if (day < 1 || day > daysInMonth) return <div key={`empty-${index}`} className="birthday-calendar-empty" />;
-          const people = birthdaysByDay.get(day) ?? [];
-          const dateKey = `${monthKey}-${String(day).padStart(2, '0')}`;
-          const isToday = dateKey === new Date().toISOString().slice(0, 10);
-          const isSelected = selectedDate === dateKey;
-          const content = <><span className="birthday-calendar-day"><span>{day}</span>{isToday && <i>Hoy</i>}</span>{people.slice(0, 2).map(member => <span key={member.id} className="birthday-calendar-person"><MemberAvatar name={member.full_name} style={member.avatar_style} size="sm" className="birthday-calendar-avatar" /><b>{member.full_name.split(' ')[0]}</b></span>)}{people.length > 2 && <span className="birthday-calendar-more">+{people.length - 2} más</span>}</>;
-          return people.length > 0 ? <button key={dateKey} type="button" onClick={() => setSelectedDate(dateKey)} className={`birthday-calendar-cell birthday-calendar-event ${isSelected ? 'birthday-calendar-selected' : ''}`} aria-pressed={isSelected} aria-label={`Ver cumpleaños del ${day}`}>{content}</button> : <div key={dateKey} className="birthday-calendar-cell">{content}</div>;
-        })}
-      </div>
-      <div className="birthday-calendar-details">
-        <div><span className="birthday-calendar-detail-icon"><CalendarDays size={18} /></span><div><small>{selectedLabel ? selectedLabel : 'Selecciona una fecha destacada'}</small><h3>{selectedPeople.length ? `${selectedPeople.length} cumpleaños${selectedPeople.length === 1 ? '' : 's'} para celebrar` : 'Los detalles aparecerán aquí'}</h3></div></div>
-        {selectedPeople.length > 0 ? <div className="birthday-calendar-people">{selectedPeople.map(member => <div key={member.id} className="birthday-calendar-detail-person"><MemberAvatar name={member.full_name} style={member.avatar_style} size="sm" /><span><b>{member.full_name}</b><small>{member.ministry || 'Comunidad Shalom'}</small></span></div>)}</div> : <p>Elige un día con integrantes para ver sus datos básicos.</p>}
-      </div>
+      <AnimatePresence initial={false}>
+        {!collapsed && <motion.div id="birthday-calendar-content" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+          <div className="birthday-calendar-weekdays" aria-hidden="true">{WEEK_DAYS.map(day => <span key={day}>{day}</span>)}</div>
+          <div className="birthday-calendar-grid">
+            {Array.from({ length: totalCells }, (_, index) => {
+              const day = index - startOffset + 1;
+              if (day < 1 || day > daysInMonth) return <div key={`empty-${index}`} className="birthday-calendar-empty" />;
+              const people = birthdaysByDay.get(day) ?? [];
+              const dateKey = `${monthKey}-${String(day).padStart(2, '0')}`;
+              const isToday = dateKey === new Date().toISOString().slice(0, 10);
+              const isSelected = selectedDate === dateKey;
+              const content = <><span className="birthday-calendar-day"><span>{day}</span>{isToday && <i>Hoy</i>}</span>{people.slice(0, 2).map(member => <span key={member.id} className="birthday-calendar-person"><MemberAvatar name={member.full_name} style={member.avatar_style} size="sm" className="birthday-calendar-avatar" /><b>{member.full_name.split(' ')[0]}</b></span>)}{people.length > 2 && <span className="birthday-calendar-more">+{people.length - 2} más</span>}</>;
+              return people.length > 0 ? <button key={dateKey} type="button" onClick={() => setSelectedDate(dateKey)} className={`birthday-calendar-cell birthday-calendar-event ${isSelected ? 'birthday-calendar-selected' : ''}`} aria-pressed={isSelected} aria-label={`Ver cumpleaños del ${day}`}>{content}</button> : <div key={dateKey} className="birthday-calendar-cell">{content}</div>;
+            })}
+          </div>
+          <div className="birthday-calendar-details">
+            <div><span className="birthday-calendar-detail-icon"><CalendarDays size={18} /></span><div><small>{selectedLabel ? selectedLabel : 'Selecciona una fecha destacada'}</small><h3>{selectedPeople.length ? `${selectedPeople.length} cumpleaños${selectedPeople.length === 1 ? '' : 's'} para celebrar` : 'Los detalles aparecerán aquí'}</h3></div></div>
+            {selectedPeople.length > 0 ? <div className="birthday-calendar-people">{selectedPeople.map(member => <div key={member.id} className="birthday-calendar-detail-person"><MemberAvatar name={member.full_name} style={member.avatar_style} size="sm" /><span><b>{member.full_name}</b><small>{member.ministry || 'Comunidad Shalom'}</small></span></div>)}</div> : <p>Elige un día con integrantes para ver sus datos básicos.</p>}
+          </div>
+        </motion.div>}
+      </AnimatePresence>
     </section>
   );
 }
