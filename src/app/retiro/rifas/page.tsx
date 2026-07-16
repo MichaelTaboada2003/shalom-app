@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Plus, Ticket, Trash2, UserRoundPlus, Users, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Plus, Ticket, Trash2, UserRoundPlus, Users, X } from 'lucide-react';
 
 interface Raffle {
   id: string;
+  activityId?: string;
   name: string;
   prize: string;
   goal: number;
@@ -57,8 +57,7 @@ function money(value: number) {
 
 function today() { return new Date().toISOString().slice(0, 10); }
 
-export default function RifasPage() {
-  const router = useRouter();
+export default function RifasPage({ embedded = false, activityId, activityName }: { embedded?: boolean; activityId?: string; activityName?: string }) {
   const [ready, setReady] = useState(false);
   const [raffles, setRaffles] = useState<Raffle[]>([]);
   const [sellers, setSellers] = useState<RaffleSeller[]>([]);
@@ -83,7 +82,8 @@ export default function RifasPage() {
   useEffect(() => { if (ready) localStorage.setItem(SELLERS_KEY, JSON.stringify(sellers)); }, [sellers, ready]);
   useEffect(() => { if (ready) localStorage.setItem(SALES_KEY, JSON.stringify(sales)); }, [sales, ready]);
 
-  const selectedRaffle = raffles.find(raffle => raffle.id === selectedId) ?? null;
+  const activityRaffles = activityId ? raffles.filter(raffle => raffle.activityId === activityId) : raffles;
+  const selectedRaffle = activityRaffles.find(raffle => raffle.id === selectedId) ?? null;
   const statsFor = (raffleId: string) => {
     const raffleSales = sales.filter(sale => sale.raffleId === raffleId);
     const ticketsSold = raffleSales.reduce((sum, sale) => sum + sale.tickets, 0);
@@ -93,12 +93,13 @@ export default function RifasPage() {
   };
 
   const totals = useMemo(() => {
-    const raised = raffles.reduce((sum, raffle) => sum + statsFor(raffle.id).raised, 0);
-    const goal = raffles.reduce((sum, raffle) => sum + raffle.goal, 0);
-    return { raised, goal, sellers: sellers.length };
+    const raised = activityRaffles.reduce((sum, raffle) => sum + statsFor(raffle.id).raised, 0);
+    const goal = activityRaffles.reduce((sum, raffle) => sum + raffle.goal, 0);
+    const sellerCount = sellers.filter(seller => activityRaffles.some(raffle => raffle.id === seller.raffleId)).length;
+    return { raised, goal, sellers: sellerCount };
   // statsFor intentionally reads current state to keep aggregate cards in sync.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [raffles, sellers, sales]);
+  }, [activityId, raffles, sellers, sales]);
 
   const createRaffle = (event: React.FormEvent) => {
     event.preventDefault();
@@ -106,7 +107,7 @@ export default function RifasPage() {
     const ticketPrice = Number(raffleForm.ticketPrice);
     const ticketCount = Number(raffleForm.ticketCount);
     if (!raffleForm.name.trim() || !Number.isFinite(goal) || goal <= 0 || !Number.isFinite(ticketPrice) || ticketPrice <= 0 || !Number.isInteger(ticketCount) || ticketCount <= 0) return;
-    const raffle: Raffle = { id: crypto.randomUUID(), name: raffleForm.name.trim(), prize: raffleForm.prize.trim(), goal, ticketPrice, ticketCount, drawDate: raffleForm.drawDate, createdAt: today() };
+    const raffle: Raffle = { id: crypto.randomUUID(), activityId, name: raffleForm.name.trim(), prize: raffleForm.prize.trim(), goal, ticketPrice, ticketCount, drawDate: raffleForm.drawDate, createdAt: today() };
     setRaffles(current => [raffle, ...current]);
     setSelectedId(raffle.id);
     setRaffleForm(emptyRaffle);
@@ -147,9 +148,9 @@ export default function RifasPage() {
   const progress = selectedRaffle && selectedStats ? Math.min(100, Math.round((selectedStats.raised / selectedRaffle.goal) * 100)) : 0;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 pb-7 pt-4">
+    <div className={embedded ? 'pt-5' : 'mx-auto max-w-3xl px-4 pb-7 pt-4'}>
       <motion.header initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-5 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3"><button onClick={() => router.push('/retiro')} className="icon-button" aria-label="Volver a retiro"><ArrowLeft size={18} /></button><div><h1 className="text-xl font-bold tracking-tight">Rifas</h1><p className="mt-1 text-xs text-text-muted">Metas, boletas y vendedores en un solo lugar</p></div></div>
+        <div><h1 className={`${embedded ? 'text-lg' : 'text-xl'} font-bold tracking-tight`}>{embedded ? `Rifas de ${activityName}` : 'Rifas'}</h1><p className="mt-1 text-xs text-text-muted">Metas, boletas y vendedores en un solo lugar</p></div>
         <button onClick={() => setShowRaffleForm(true)} className="primary-button shrink-0"><Plus size={16} /> Nueva</button>
       </motion.header>
 
@@ -159,7 +160,7 @@ export default function RifasPage() {
       </motion.section>
 
       <section className="mt-6"><div className="mb-3"><h2 className="text-base font-bold">Tus rifas</h2><p className="mt-0.5 text-xs text-text-muted">Cada una conserva sus boletas, vendedores y recaudo.</p></div>
-        {raffles.length === 0 ? <div className="rounded-3xl border border-dashed border-border-medium bg-bg-card/45 p-8 text-center"><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-warning-soft text-warning"><Ticket size={21} /></span><h2 className="mt-3 text-base font-bold">Crea tu primera rifa</h2><p className="mx-auto mt-1 max-w-64 text-xs leading-5 text-text-secondary">Define la meta, el valor de cada boleta y luego agrega las personas que venderán.</p><button onClick={() => setShowRaffleForm(true)} className="primary-button mt-4"><Plus size={16} /> Crear rifa</button></div> : <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{raffles.map(raffle => { const stats = statsFor(raffle.id); const isSelected = raffle.id === selectedId; return <button key={raffle.id} onClick={() => setSelectedId(raffle.id)} className={`min-w-56 rounded-2xl border p-3 text-left transition-colors ${isSelected ? 'border-warning bg-warning-soft/55' : 'border-border-subtle bg-bg-card hover:border-border-medium'}`}><span className="flex items-center gap-2 text-xs font-black text-text-primary"><Ticket size={15} className="text-warning" /><span className="truncate">{raffle.name}</span></span><small className="mt-1 block truncate text-[10px] font-bold text-text-muted">{raffle.prize || 'Premio por definir'}</small><b className="mt-2 block text-xs tabular-nums text-success">{money(stats.raised)} · {stats.ticketsSold}/{raffle.ticketCount} boletas</b></button>; })}</div>}
+        {activityRaffles.length === 0 ? <div className="rounded-3xl border border-dashed border-border-medium bg-bg-card/45 p-8 text-center"><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-warning-soft text-warning"><Ticket size={21} /></span><h2 className="mt-3 text-base font-bold">Crea tu primera rifa</h2><p className="mx-auto mt-1 max-w-64 text-xs leading-5 text-text-secondary">Define la meta, el valor de cada boleta y luego agrega las personas que venderán.</p><button onClick={() => setShowRaffleForm(true)} className="primary-button mt-4"><Plus size={16} /> Crear rifa</button></div> : <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{activityRaffles.map(raffle => { const stats = statsFor(raffle.id); const isSelected = raffle.id === selectedId; return <button key={raffle.id} onClick={() => setSelectedId(raffle.id)} className={`min-w-56 rounded-2xl border p-3 text-left transition-colors ${isSelected ? 'border-warning bg-warning-soft/55' : 'border-border-subtle bg-bg-card hover:border-border-medium'}`}><span className="flex items-center gap-2 text-xs font-black text-text-primary"><Ticket size={15} className="text-warning" /><span className="truncate">{raffle.name}</span></span><small className="mt-1 block truncate text-[10px] font-bold text-text-muted">{raffle.prize || 'Premio por definir'}</small><b className="mt-2 block text-xs tabular-nums text-success">{money(stats.raised)} · {stats.ticketsSold}/{raffle.ticketCount} boletas</b></button>; })}</div>}
       </section>
 
       {selectedRaffle && selectedStats && <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mt-6">

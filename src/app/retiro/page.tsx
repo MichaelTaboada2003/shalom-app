@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { BookOpenCheck, ChevronRight, Ticket, Wallet } from 'lucide-react';
+import { BookOpenCheck, ChevronRight, Wallet } from 'lucide-react';
 
 const FEATURES = [
   {
@@ -20,14 +20,6 @@ const FEATURES = [
     Icon: BookOpenCheck,
     gradient: 'from-success/20 to-success/5',
     iconColor: 'text-success',
-  },
-  {
-    href: '/retiro/rifas',
-    label: 'Rifas',
-    description: 'Organiza metas, boletas y vendedores por cada rifa',
-    Icon: Ticket,
-    gradient: 'from-warning/20 to-warning/5',
-    iconColor: 'text-warning',
   },
 ];
 
