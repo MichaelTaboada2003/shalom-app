@@ -23,9 +23,11 @@
 .character[data-skin='medium'] { --skin: #cf8b65; --skin-shadow: #a9664e; }
 .character[data-skin='tan'] { --skin: #af704e; --skin-shadow: #864a37; }
 .character[data-skin='deep'] { --skin: #7d4937; --skin-shadow: #573027; }
-.character[data-hair='1'] { --hair: #241f2d; }
-.character[data-hair='2'] { --hair: #77482e; }
-.character[data-hair='3'] { --hair: #bd7b38; }
+.character[data-hair-color='midnight'] { --hair: #241f2d; }
+.character[data-hair-color='chestnut'] { --hair: #4a2c3b; }
+.character[data-hair-color='copper'] { --hair: #8a4b2d; }
+.character[data-hair-color='golden'] { --hair: #bd7b38; }
+.character[data-hair-color='silver'] { --hair: #9b9daa; }
 .character[data-outfit='sky'] { --outfit: #60b8e9; --outfit-dark: #397faf; }
 .character[data-outfit='mint'] { --outfit: #58cfa0; --outfit-dark: #2c9273; }
 .character[data-outfit='sunset'] { --outfit: #f28a6f; --outfit-dark: #b95856; }

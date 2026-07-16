@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import {
-  AVATAR_SKIN_TONES, AVATAR_STYLES, HAIR_STYLES_BY_GENDER,
-  type AvatarGender, type AvatarHairStyle, type AvatarSkinTone, type AvatarStyle, type Member, type MemberStatus,
+  AVATAR_HAIR_COLORS, AVATAR_SKIN_TONES, AVATAR_STYLES, HAIR_STYLES_BY_GENDER,
+  type AvatarGender, type AvatarHairColor, type AvatarHairStyle, type AvatarSkinTone, type AvatarStyle, type Member, type MemberStatus,
 } from '@/lib/community';
 import { CommunityCharacter, profileFromMember, type CharacterProfile } from '@/components/community-character';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
@@ -20,16 +20,17 @@ const swatchClasses: Record<AvatarStyle, string> = { lilac: styles.swatchLilac, 
 const genderLabels: Record<AvatarGender, string> = { woman: 'Mujer', man: 'Hombre' };
 const skinLabels: Record<AvatarSkinTone, string> = { fair: 'Clara', light: 'Suave', medium: 'Media', tan: 'Canela', deep: 'Oscura' };
 const hairLabels: Record<AvatarHairStyle, string> = { waves: 'Ondas', long: 'Largo', bun: 'Moño', braids: 'Trenzas', short: 'Corto', fade: 'Degradado', curls: 'Rizos', side: 'Lateral' };
+const hairColorLabels: Record<AvatarHairColor, string> = { midnight: 'Negro', chestnut: 'Castaño', copper: 'Cobrizo', golden: 'Dorado', silver: 'Gris' };
 const inputClass = 'w-full h-12 rounded-2xl border border-border-subtle bg-bg-primary/70 px-4 text-sm text-text-primary outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/10 placeholder:text-text-muted';
 type Filter = 'all' | 'active' | 'birthdays';
-type FormState = { fullName: string; email: string; phone: string; birthDate: string; avatarStyle: AvatarStyle; avatarGender: AvatarGender; avatarSkinTone: AvatarSkinTone; avatarHairStyle: AvatarHairStyle; ministry: string; bio: string; status: MemberStatus; };
-const emptyForm: FormState = { fullName: '', email: '', phone: '', birthDate: '', avatarStyle: 'lilac', avatarGender: 'woman', avatarSkinTone: 'medium', avatarHairStyle: 'waves', ministry: '', bio: '', status: 'active' };
+type FormState = { fullName: string; email: string; phone: string; birthDate: string; avatarStyle: AvatarStyle; avatarGender: AvatarGender; avatarSkinTone: AvatarSkinTone; avatarHairStyle: AvatarHairStyle; avatarHairColor: AvatarHairColor; ministry: string; bio: string; status: MemberStatus; };
+const emptyForm: FormState = { fullName: '', email: '', phone: '', birthDate: '', avatarStyle: 'lilac', avatarGender: 'woman', avatarSkinTone: 'medium', avatarHairStyle: 'waves', avatarHairColor: 'chestnut', ministry: '', bio: '', status: 'active' };
 
 function toForm(member?: Member | null): FormState {
   if (!member) return emptyForm;
   return {
     fullName: member.full_name, email: member.email ?? '', phone: member.phone ?? '', birthDate: member.birth_date?.slice(0, 10) ?? '',
-    avatarStyle: member.avatar_style ?? 'lilac', avatarGender: member.avatar_gender ?? 'woman', avatarSkinTone: member.avatar_skin_tone ?? 'medium', avatarHairStyle: member.avatar_hair_style ?? 'waves',
+    avatarStyle: member.avatar_style ?? 'lilac', avatarGender: member.avatar_gender ?? 'woman', avatarSkinTone: member.avatar_skin_tone ?? 'medium', avatarHairStyle: member.avatar_hair_style ?? 'waves', avatarHairColor: member.avatar_hair_color ?? 'chestnut',
     ministry: member.ministry ?? '', bio: member.bio ?? '', status: member.status,
   };
 }
@@ -72,6 +73,7 @@ function MemberForm({ member, onClose, onSaved }: { member?: Member | null; onCl
     avatarGender: form.avatarGender,
     avatarSkinTone: form.avatarSkinTone,
     avatarHairStyle: form.avatarHairStyle,
+    avatarHairColor: form.avatarHairColor,
   };
 
   const submit = async (event: React.FormEvent) => {
@@ -103,7 +105,8 @@ function MemberForm({ member, onClose, onSaved }: { member?: Member | null; onCl
             <label className="form-label">Servicio o grupo<input value={form.ministry} onChange={event => update('ministry', event.target.value)} className={inputClass} placeholder="Música, acogida…" /></label>
             <div className={styles.wide}><span className="form-label-text">Su personaje</span><p className={styles.appearanceHelp}>Elige sus rasgos para que se reconozca en Mundo Shalom.</p><div className={styles.genderChoices}>{(['woman', 'man'] as const).map(gender => <button key={gender} type="button" onClick={() => updateGender(gender)} className={`${styles.genderChoice} ${form.avatarGender === gender ? styles.styleChoiceActive : ''}`} aria-pressed={form.avatarGender === gender}><span className={styles.genderPortrait} data-gender={gender} />{genderLabels[gender]}</button>)}</div></div>
             <div className={styles.wide}><span className="form-label-text">Tono de piel</span><div className={styles.toneChoices}>{AVATAR_SKIN_TONES.map(tone => <button key={tone} type="button" onClick={() => update('avatarSkinTone', tone)} className={`${styles.toneChoice} ${form.avatarSkinTone === tone ? styles.styleChoiceActive : ''}`} aria-pressed={form.avatarSkinTone === tone}><span className={styles.skinSwatch} data-skin={tone} />{skinLabels[tone]}</button>)}</div></div>
-            <div className={styles.wide}><span className="form-label-text">Peinado</span><div className={styles.hairChoices}>{HAIR_STYLES_BY_GENDER[form.avatarGender].map(hair => <button key={hair} type="button" onClick={() => update('avatarHairStyle', hair)} className={`${styles.hairChoice} ${form.avatarHairStyle === hair ? styles.styleChoiceActive : ''}`} aria-pressed={form.avatarHairStyle === hair}><span className={styles.hairSwatch} data-hair={hair} />{hairLabels[hair]}</button>)}</div></div>
+            <div className={styles.wide}><span className="form-label-text">Peinado</span><div className={styles.hairChoices}>{HAIR_STYLES_BY_GENDER[form.avatarGender].map(hair => <button key={hair} type="button" onClick={() => update('avatarHairStyle', hair)} className={`${styles.hairChoice} ${form.avatarHairStyle === hair ? styles.styleChoiceActive : ''}`} aria-pressed={form.avatarHairStyle === hair}><span className={styles.hairSwatch} data-hair={hair} data-hair-color={form.avatarHairColor} />{hairLabels[hair]}</button>)}</div></div>
+            <div className={styles.wide}><span className="form-label-text">Color de cabello</span><div className={styles.hairColorChoices}>{AVATAR_HAIR_COLORS.map(color => <button key={color} type="button" onClick={() => update('avatarHairColor', color)} className={`${styles.hairColorChoice} ${form.avatarHairColor === color ? styles.styleChoiceActive : ''}`} aria-pressed={form.avatarHairColor === color}><span className={styles.hairColorSwatch} data-hair-color={color} />{hairColorLabels[color]}</button>)}</div></div>
             <div className={styles.wide}><span className="form-label-text">Color de su personaje</span><div className={styles.styleChoices}>{AVATAR_STYLES.map(style => <button key={style} type="button" onClick={() => update('avatarStyle', style)} className={`${styles.styleChoice} ${form.avatarStyle === style ? styles.styleChoiceActive : ''}`} aria-pressed={form.avatarStyle === style}><span className={`${styles.styleSwatch} ${swatchClasses[style]}`} />{avatarLabels[style]}</button>)}</div></div>
             <label className={`form-label ${styles.wide}`}>Lo que le hace especial<textarea value={form.bio} onChange={event => update('bio', event.target.value)} className={`${inputClass} h-28 py-3`} placeholder="Talentos, forma de servir, una historia bonita…" /></label>
             {member && <label className={`form-label ${styles.wide}`}>Estado<select value={form.status} onChange={event => update('status', event.target.value as MemberStatus)} className={inputClass}><option value="active">Activo en la comunidad</option><option value="inactive">Inactivo</option></select></label>}

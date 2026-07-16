@@ -42,3 +42,17 @@
   .formGrid { gap:17px; }
   .formActions { bottom:-20px; margin:22px -17px -20px; padding:14px 17px 16px; }
 }
+
+.hairColorChoices { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-top:7px; }
+.hairColorChoice { display:flex; min-height:54px; align-items:center; justify-content:center; gap:8px; border:1px solid var(--color-border-subtle); border-radius:14px; background:rgba(13,11,27,.42); color:var(--color-text-muted); font-size:10px; font-weight:900; transition:border-color .2s ease,background .2s ease,color .2s ease; }
+.hairColorChoice:hover { border-color:var(--color-border-medium); color:var(--color-text-primary); }
+.hairColorSwatch { width:22px; height:22px; border:2px solid rgba(255,255,255,.2); border-radius:50%; }
+.hairColorSwatch[data-hair-color='midnight'],.hairSwatch[data-hair-color='midnight'] { --hair-preview:#241f2d; background:#241f2d; }
+.hairColorSwatch[data-hair-color='chestnut'],.hairSwatch[data-hair-color='chestnut'] { --hair-preview:#4a2c3b; background:#4a2c3b; }
+.hairColorSwatch[data-hair-color='copper'],.hairSwatch[data-hair-color='copper'] { --hair-preview:#8a4b2d; background:#8a4b2d; }
+.hairColorSwatch[data-hair-color='golden'],.hairSwatch[data-hair-color='golden'] { --hair-preview:#bd7b38; background:#bd7b38; }
+.hairColorSwatch[data-hair-color='silver'],.hairSwatch[data-hair-color='silver'] { --hair-preview:#9b9daa; background:#9b9daa; }
+.hairSwatch[data-hair='braids'] { background:radial-gradient(circle at 18% 35%,var(--hair-preview,#4a2c3b) 0 16%,transparent 18%),radial-gradient(circle at 82% 35%,var(--hair-preview,#4a2c3b) 0 16%,transparent 18%),var(--hair-preview,#4a2c3b); }
+.hairSwatch[data-hair='curls'] { background:radial-gradient(circle at 18% 40%,var(--hair-preview,#4a2c3b) 0 25%,transparent 27%),radial-gradient(circle at 50% 15%,var(--hair-preview,#4a2c3b) 0 28%,transparent 30%),radial-gradient(circle at 82% 40%,var(--hair-preview,#4a2c3b) 0 25%,transparent 27%),var(--hair-preview,#4a2c3b); }
+
+@media (max-width:640px) { .hairColorChoices { grid-template-columns:repeat(5,minmax(54px,1fr)); overflow-x:auto; } }

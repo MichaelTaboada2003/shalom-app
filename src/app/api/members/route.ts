@@ -10,7 +10,7 @@ export async function GET() {
     const sql = getDb();
     const rows = await sql`
       SELECT id, full_name, email, phone, birth_date, avatar_style, avatar_gender,
-             avatar_skin_tone, avatar_hair_style, ministry, bio, status, created_at, updated_at
+             avatar_skin_tone, avatar_hair_style, avatar_hair_color, ministry, bio, status, created_at, updated_at
       FROM members
       ORDER BY status ASC, full_name ASC
     `;
@@ -32,14 +32,14 @@ export async function POST(request: Request) {
     const rows = await sql`
       INSERT INTO members (
         full_name, email, phone, birth_date, avatar_style, avatar_gender,
-        avatar_skin_tone, avatar_hair_style, ministry, bio, status
+        avatar_skin_tone, avatar_hair_style, avatar_hair_color, ministry, bio, status
       ) VALUES (
         ${input.fullName}, ${input.email}, ${input.phone}, ${input.birthDate}, ${input.avatarStyle},
-        ${input.avatarGender}, ${input.avatarSkinTone}, ${input.avatarHairStyle},
+        ${input.avatarGender}, ${input.avatarSkinTone}, ${input.avatarHairStyle}, ${input.avatarHairColor},
         ${input.ministry}, ${input.bio}, ${input.status}
       )
       RETURNING id, full_name, email, phone, birth_date, avatar_style, avatar_gender,
-                avatar_skin_tone, avatar_hair_style, ministry, bio, status, created_at, updated_at
+                avatar_skin_tone, avatar_hair_style, avatar_hair_color, ministry, bio, status, created_at, updated_at
     `;
     const member = rows[0];
     const defaultReminder = input.birthDate

@@ -11,9 +11,9 @@ import { CommunityCharacter, type CharacterProfile } from '@/components/communit
 import styles from './login.module.css';
 
 const welcomeCharacters: CharacterProfile[] = [
-  { id: 'login-ana', name: 'Ana', avatarStyle: 'lilac', avatarGender: 'woman', avatarSkinTone: 'medium', avatarHairStyle: 'waves' },
-  { id: 'login-camila', name: 'Camila', avatarStyle: 'mint', avatarGender: 'woman', avatarSkinTone: 'deep', avatarHairStyle: 'braids' },
-  { id: 'login-samuel', name: 'Samuel', avatarStyle: 'sky', avatarGender: 'man', avatarSkinTone: 'tan', avatarHairStyle: 'curls' },
+  { id: 'login-ana', name: 'Ana', avatarStyle: 'lilac', avatarGender: 'woman', avatarSkinTone: 'medium', avatarHairStyle: 'waves', avatarHairColor: 'chestnut' },
+  { id: 'login-camila', name: 'Camila', avatarStyle: 'mint', avatarGender: 'woman', avatarSkinTone: 'deep', avatarHairStyle: 'braids', avatarHairColor: 'midnight' },
+  { id: 'login-samuel', name: 'Samuel', avatarStyle: 'sky', avatarGender: 'man', avatarSkinTone: 'tan', avatarHairStyle: 'curls', avatarHairColor: 'golden' },
 ];
 
 export default function LoginPage() {

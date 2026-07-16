@@ -1,4 +1,4 @@
-import type { AvatarGender, AvatarHairStyle, AvatarSkinTone, AvatarStyle, Member } from '@/lib/community';
+import type { AvatarGender, AvatarHairColor, AvatarHairStyle, AvatarSkinTone, AvatarStyle, Member } from '@/lib/community';
 import styles from './community-character.module.css';
 
 export interface CharacterProfile {
@@ -8,6 +8,7 @@ export interface CharacterProfile {
   avatarGender: AvatarGender;
   avatarSkinTone: AvatarSkinTone;
   avatarHairStyle: AvatarHairStyle;
+  avatarHairColor: AvatarHairColor;
 }
 
 interface CommunityCharacterProps {
@@ -19,12 +20,6 @@ interface CommunityCharacterProps {
   className?: string;
 }
 
-function hash(value: string): number {
-  let result = 0;
-  for (let index = 0; index < value.length; index += 1) result = ((result << 5) - result + value.charCodeAt(index)) | 0;
-  return Math.abs(result);
-}
-
 export function profileFromMember(member: Member): CharacterProfile {
   return {
     id: member.id,
@@ -33,17 +28,16 @@ export function profileFromMember(member: Member): CharacterProfile {
     avatarGender: member.avatar_gender ?? 'woman',
     avatarSkinTone: member.avatar_skin_tone ?? 'medium',
     avatarHairStyle: member.avatar_hair_style ?? 'waves',
+    avatarHairColor: member.avatar_hair_color ?? 'chestnut',
   };
 }
 
 export function CommunityCharacter({ profile, size = 'medium', walking = false, selected = false, celebrating = false, className = '' }: CommunityCharacterProps) {
-  const seed = hash(profile.id || profile.name);
-
   return (
     <div
       className={`${styles.character} ${styles[size]} ${walking ? styles.walking : ''} ${selected ? styles.selected : ''} ${celebrating ? styles.celebrating : ''} ${className}`}
       data-skin={profile.avatarSkinTone}
-      data-hair={seed % 4}
+      data-hair-color={profile.avatarHairColor}
       data-hair-shape={profile.avatarHairStyle}
       data-gender={profile.avatarGender}
       data-outfit={profile.avatarStyle || 'lilac'}
