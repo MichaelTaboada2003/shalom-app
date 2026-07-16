@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Wallet, ChevronRight } from 'lucide-react';
+import { BookOpenCheck, ChevronRight, Wallet } from 'lucide-react';
 
 const FEATURES = [
   {
@@ -12,6 +12,14 @@ const FEATURES = [
     Icon: Wallet,
     gradient: 'from-accent/20 to-accent/5',
     iconColor: 'text-accent',
+  },
+  {
+    href: '/retiro/contabilidad',
+    label: 'Contabilidad',
+    description: 'Registra ingresos, gastos y el balance del retiro',
+    Icon: BookOpenCheck,
+    gradient: 'from-success/20 to-success/5',
+    iconColor: 'text-success',
   },
 ];
 
