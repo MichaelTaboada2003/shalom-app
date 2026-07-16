@@ -64,6 +64,7 @@ function readStorage<T>(key: string): T[] {
     return [];
   }
 }
+function persistRetreat(scope: string, data: unknown[]) { return fetch('/api/retreat', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scope, data }) }); }
 
 function money(value: number) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
@@ -89,15 +90,25 @@ export default function RifasPage({ embedded = false, activityId, activityName, 
   const [rafflePendingCompletion, setRafflePendingCompletion] = useState<Raffle | null>(null);
 
   useEffect(() => {
-    setRaffles(readStorage<Raffle>(RAFFLES_KEY));
-    setSellers(readStorage<RaffleSeller>(SELLERS_KEY));
-    setSales(readStorage<RaffleSale>(SALES_KEY));
-    setReady(true);
+    let active = true;
+    const legacyRaffles = readStorage<Raffle>(RAFFLES_KEY);
+    const legacySellers = readStorage<RaffleSeller>(SELLERS_KEY);
+    const legacySales = readStorage<RaffleSale>(SALES_KEY);
+    fetch('/api/retreat', { cache: 'no-store' }).then(async response => {
+      if (!response.ok) throw new Error('No se pudo cargar Rifas');
+      return response.json();
+    }).then(data => {
+      if (!active) return;
+      setRaffles(data.raffles.length || !legacyRaffles.length ? data.raffles : legacyRaffles);
+      setSellers(data.sellers.length || !legacySellers.length ? data.sellers : legacySellers);
+      setSales(data.sales.length || !legacySales.length ? data.sales : legacySales);
+    }).catch(() => { if (active) { setRaffles(legacyRaffles); setSellers(legacySellers); setSales(legacySales); } }).finally(() => { if (active) setReady(true); });
+    return () => { active = false; };
   }, []);
 
-  useEffect(() => { if (ready) localStorage.setItem(RAFFLES_KEY, JSON.stringify(raffles)); }, [raffles, ready]);
-  useEffect(() => { if (ready) localStorage.setItem(SELLERS_KEY, JSON.stringify(sellers)); }, [sellers, ready]);
-  useEffect(() => { if (ready) localStorage.setItem(SALES_KEY, JSON.stringify(sales)); }, [sales, ready]);
+  useEffect(() => { if (ready) void persistRetreat('raffles', raffles); }, [raffles, ready]);
+  useEffect(() => { if (ready) void persistRetreat('sellers', sellers); }, [sellers, ready]);
+  useEffect(() => { if (ready) void persistRetreat('sales', sales); }, [sales, ready]);
 
   const activityRaffles = activityId ? raffles.filter(raffle => raffle.activityId === activityId) : raffles;
   const activeRaffles = activityRaffles.filter(raffle => raffle.status !== 'archived');
@@ -194,7 +205,7 @@ export default function RifasPage({ embedded = false, activityId, activityName, 
     if (settlement <= 0) return;
     const movement: SettlementMovement = { id: crypto.randomUUID(), activityId: null, type: 'income', concept: `Rifa concluida: ${rafflePendingCompletion.name}`, category: 'Rifa o actividad', amount: settlement, date: today(), note: `Recaudo final de ${statsFor(rafflePendingCompletion.id).ticketsSold} boletas.` };
     if (onSettlement) onSettlement(movement);
-    else localStorage.setItem(MOVEMENTS_KEY, JSON.stringify([movement, ...readStorage<SettlementMovement>(MOVEMENTS_KEY)]));
+    else void persistRetreat('movements', [movement, ...readStorage<SettlementMovement>(MOVEMENTS_KEY)]);
     setRaffles(current => current.map(raffle => raffle.id === rafflePendingCompletion.id ? { ...raffle, status: 'archived', completedAt: today(), settlementMovementId: movement.id } : raffle));
     if (selectedId === rafflePendingCompletion.id) setSelectedId(null);
     setRafflePendingCompletion(null);
