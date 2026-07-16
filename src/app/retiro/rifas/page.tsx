@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Plus, Ticket, Trash2, UserRoundPlus, Users, X } from 'lucide-react';
+import { Pencil, Plus, Ticket, Trash2, UserRoundPlus, Users, X } from 'lucide-react';
 
 interface Raffle {
   id: string;
@@ -69,6 +69,8 @@ export default function RifasPage({ embedded = false, activityId, activityName }
   const [sellerForm, setSellerForm] = useState(emptySeller);
   const [saleForm, setSaleForm] = useState(emptySale);
   const [rafflePendingDeletion, setRafflePendingDeletion] = useState<Raffle | null>(null);
+  const [saleBeingEdited, setSaleBeingEdited] = useState<RaffleSale | null>(null);
+  const [salePendingDeletion, setSalePendingDeletion] = useState<RaffleSale | null>(null);
 
   useEffect(() => {
     setRaffles(readStorage<Raffle>(RAFFLES_KEY));
@@ -121,15 +123,36 @@ export default function RifasPage({ embedded = false, activityId, activityName }
     setShowSellerForm(false);
   };
 
-  const createSale = (event: React.FormEvent) => {
+  const closeSaleForm = () => {
+    setShowSaleForm(false);
+    setSaleBeingEdited(null);
+    setSaleForm(emptySale);
+  };
+
+  const openSaleForm = (sale?: RaffleSale) => {
+    if (sale) {
+      setSaleBeingEdited(sale);
+      setSaleForm({ sellerId: sale.sellerId, tickets: String(sale.tickets), date: sale.date });
+    } else {
+      setSaleBeingEdited(null);
+      setSaleForm({ sellerId: selectedSellers[0]?.id || '', tickets: '', date: today() });
+    }
+    setShowSaleForm(true);
+  };
+
+  const saveSale = (event: React.FormEvent) => {
     event.preventDefault();
     if (!selectedRaffle || !saleForm.sellerId) return;
     const tickets = Number(saleForm.tickets);
     const { ticketsSold } = statsFor(selectedRaffle.id);
-    if (!Number.isInteger(tickets) || tickets <= 0 || tickets + ticketsSold > selectedRaffle.ticketCount) return;
-    setSales(current => [{ id: crypto.randomUUID(), raffleId: selectedRaffle.id, sellerId: saleForm.sellerId, tickets, date: saleForm.date || today() }, ...current]);
-    setSaleForm(emptySale);
-    setShowSaleForm(false);
+    const availableTickets = selectedRaffle.ticketCount - ticketsSold + (saleBeingEdited?.tickets || 0);
+    if (!Number.isInteger(tickets) || tickets <= 0 || tickets > availableTickets) return;
+    if (saleBeingEdited) {
+      setSales(current => current.map(sale => sale.id === saleBeingEdited.id ? { ...sale, sellerId: saleForm.sellerId, tickets, date: saleForm.date || today() } : sale));
+    } else {
+      setSales(current => [{ id: crypto.randomUUID(), raffleId: selectedRaffle.id, sellerId: saleForm.sellerId, tickets, date: saleForm.date || today() }, ...current]);
+    }
+    closeSaleForm();
   };
 
   const deleteRaffle = () => {
@@ -139,6 +162,12 @@ export default function RifasPage({ embedded = false, activityId, activityName }
     setSales(current => current.filter(sale => sale.raffleId !== rafflePendingDeletion.id));
     if (selectedId === rafflePendingDeletion.id) setSelectedId(null);
     setRafflePendingDeletion(null);
+  };
+
+  const deleteSale = () => {
+    if (!salePendingDeletion) return;
+    setSales(current => current.filter(sale => sale.id !== salePendingDeletion.id));
+    setSalePendingDeletion(null);
   };
 
   const selectedSellers = selectedRaffle ? sellers.filter(seller => seller.raffleId === selectedRaffle.id) : [];
@@ -173,13 +202,14 @@ export default function RifasPage({ embedded = false, activityId, activityName }
         <div className="mt-6 flex items-end justify-between gap-3"><div><h2 className="text-base font-bold">Vendedores</h2><p className="mt-0.5 text-xs text-text-muted">Personas responsables de ofrecer las boletas.</p></div><button onClick={() => setShowSellerForm(true)} className="secondary-button min-h-9 px-3 text-xs"><UserRoundPlus size={15} /> Agregar</button></div>
         {selectedSellers.length === 0 ? <div className="mt-3 rounded-2xl border border-dashed border-border-medium bg-bg-card/45 p-5 text-center text-xs text-text-secondary">Agrega vendedores para registrar sus ventas.</div> : <div className="mt-3 grid gap-2 sm:grid-cols-2">{selectedSellers.map(seller => { const sold = selectedSales.filter(sale => sale.sellerId === seller.id).reduce((sum, sale) => sum + sale.tickets, 0); return <article key={seller.id} className="rounded-2xl border border-border-subtle bg-bg-card p-3"><div className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-xl bg-accent-soft text-accent"><Users size={16} /></span><div className="min-w-0"><b className="block truncate text-sm">{seller.name}</b><span className="block truncate text-[10px] font-bold text-text-muted">{seller.phone || 'Sin contacto'}</span></div></div><p className="mt-3 text-xs font-bold text-success">{sold} boletas · {money(sold * selectedRaffle.ticketPrice)}</p></article>; })}</div>}
 
-        <div className="mt-6 flex items-end justify-between gap-3"><div><h2 className="text-base font-bold">Ventas registradas</h2><p className="mt-0.5 text-xs text-text-muted">Cada registro suma boletas al recaudo de esta rifa.</p></div><button disabled={selectedSellers.length === 0} onClick={() => { setSaleForm(current => ({ ...current, sellerId: selectedSellers[0]?.id || '', date: today() })); setShowSaleForm(true); }} className="primary-button min-h-9 px-3 text-xs disabled:cursor-not-allowed disabled:opacity-50"><Plus size={15} /> Registrar</button></div>
-        {selectedSales.length === 0 ? <div className="mt-3 rounded-2xl border border-dashed border-border-medium bg-bg-card/45 p-5 text-center text-xs text-text-secondary">Aún no hay ventas registradas para esta rifa.</div> : <div className="mt-3 flex flex-col gap-2">{selectedSales.map(sale => { const seller = sellers.find(item => item.id === sale.sellerId); return <article key={sale.id} className="flex items-center gap-3 rounded-2xl border border-border-subtle bg-bg-card p-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-success-soft text-success"><Ticket size={17} /></span><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><b className="truncate text-sm">Venta registrada</b><strong className="shrink-0 text-sm text-success">{money(sale.tickets * selectedRaffle.ticketPrice)}</strong></div><p className="mt-1 text-[10px] font-bold text-text-muted">{sale.tickets} boletas · {seller?.name || 'Vendedor eliminado'} · {new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${sale.date}T00:00:00Z`))}</p></div></article>; })}</div>}
+        <div className="mt-6 flex items-end justify-between gap-3"><div><h2 className="text-base font-bold">Ventas registradas</h2><p className="mt-0.5 text-xs text-text-muted">Cada registro suma boletas al recaudo de esta rifa.</p></div><button disabled={selectedSellers.length === 0} onClick={() => openSaleForm()} className="primary-button min-h-9 px-3 text-xs disabled:cursor-not-allowed disabled:opacity-50"><Plus size={15} /> Registrar</button></div>
+        {selectedSales.length === 0 ? <div className="mt-3 rounded-2xl border border-dashed border-border-medium bg-bg-card/45 p-5 text-center text-xs text-text-secondary">Aún no hay ventas registradas para esta rifa.</div> : <div className="mt-3 flex flex-col gap-2">{selectedSales.map(sale => { const seller = sellers.find(item => item.id === sale.sellerId); return <article key={sale.id} className="flex items-center gap-3 rounded-2xl border border-border-subtle bg-bg-card p-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-success-soft text-success"><Ticket size={17} /></span><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><b className="truncate text-sm">Venta registrada</b><strong className="shrink-0 text-sm text-success">{money(sale.tickets * selectedRaffle.ticketPrice)}</strong></div><p className="mt-1 text-[10px] font-bold text-text-muted">{sale.tickets} boletas · {seller?.name || 'Vendedor eliminado'} · {new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${sale.date}T00:00:00Z`))}</p></div><div className="flex shrink-0 items-center gap-1"><button onClick={() => openSaleForm(sale)} className="grid h-9 w-9 place-items-center rounded-xl text-text-muted transition-colors hover:bg-accent-soft hover:text-accent" aria-label="Editar venta"><Pencil size={15} /></button><button onClick={() => setSalePendingDeletion(sale)} className="grid h-9 w-9 place-items-center rounded-xl text-text-muted transition-colors hover:bg-danger-soft hover:text-danger" aria-label="Eliminar venta"><Trash2 size={15} /></button></div></article>; })}</div>}
       </motion.section>}
 
       <AnimatePresence>{showRaffleForm && <Modal title="Nueva rifa" subtitle="Define la campaña antes de repartir las boletas." onClose={() => setShowRaffleForm(false)}><form onSubmit={createRaffle} className="flex flex-col gap-4"><label className="form-label">Nombre de la rifa<input autoFocus required value={raffleForm.name} onChange={event => setRaffleForm(current => ({ ...current, name: event.target.value }))} className="field" placeholder="Ej. Rifa pro retiro" /></label><label className="form-label">Premio <span className="text-text-muted">(opcional)</span><input value={raffleForm.prize} onChange={event => setRaffleForm(current => ({ ...current, prize: event.target.value }))} className="field" placeholder="Ej. Canasta especial" /></label><div className="grid grid-cols-2 gap-3"><label className="form-label">Meta financiera<input required type="number" min="1" inputMode="numeric" value={raffleForm.goal} onChange={event => setRaffleForm(current => ({ ...current, goal: event.target.value }))} className="field" placeholder="$0" /></label><label className="form-label">Valor por boleta<input required type="number" min="1" inputMode="numeric" value={raffleForm.ticketPrice} onChange={event => setRaffleForm(current => ({ ...current, ticketPrice: event.target.value }))} className="field" placeholder="$0" /></label></div><div className="grid grid-cols-2 gap-3"><label className="form-label">Cantidad de boletas<input required type="number" min="1" inputMode="numeric" value={raffleForm.ticketCount} onChange={event => setRaffleForm(current => ({ ...current, ticketCount: event.target.value }))} className="field" placeholder="100" /></label><label className="form-label">Fecha de sorteo <span className="text-text-muted">(opcional)</span><input type="date" value={raffleForm.drawDate} onChange={event => setRaffleForm(current => ({ ...current, drawDate: event.target.value }))} className="field" /></label></div><ModalActions onCancel={() => setShowRaffleForm(false)} label="Crear rifa" /></form></Modal>}</AnimatePresence>
       <AnimatePresence>{showSellerForm && <Modal title="Agregar vendedor" subtitle="Podrás identificar el recaudo que aporta a esta rifa." onClose={() => setShowSellerForm(false)}><form onSubmit={createSeller} className="flex flex-col gap-4"><label className="form-label">Nombre completo<input autoFocus required value={sellerForm.name} onChange={event => setSellerForm(current => ({ ...current, name: event.target.value }))} className="field" placeholder="Nombre del vendedor" /></label><label className="form-label">Teléfono <span className="text-text-muted">(opcional)</span><input value={sellerForm.phone} onChange={event => setSellerForm(current => ({ ...current, phone: event.target.value }))} className="field" placeholder="300 000 0000" /></label><ModalActions onCancel={() => setShowSellerForm(false)} label="Agregar vendedor" /></form></Modal>}</AnimatePresence>
-      <AnimatePresence>{showSaleForm && <Modal title="Registrar venta" subtitle="La venta se suma al recaudo y a las boletas vendidas." onClose={() => setShowSaleForm(false)}><form onSubmit={createSale} className="flex flex-col gap-4"><label className="form-label">Vendedor<select required value={saleForm.sellerId} onChange={event => setSaleForm(current => ({ ...current, sellerId: event.target.value }))} className="field">{selectedSellers.map(seller => <option key={seller.id} value={seller.id}>{seller.name}</option>)}</select></label><div className="grid grid-cols-2 gap-3"><label className="form-label">Boletas vendidas<input autoFocus required type="number" min="1" max={selectedRaffle ? selectedRaffle.ticketCount - (selectedStats?.ticketsSold || 0) : undefined} inputMode="numeric" value={saleForm.tickets} onChange={event => setSaleForm(current => ({ ...current, tickets: event.target.value }))} className="field" placeholder="1" /></label><label className="form-label">Fecha<input required type="date" value={saleForm.date} onChange={event => setSaleForm(current => ({ ...current, date: event.target.value }))} className="field" /></label></div><ModalActions onCancel={() => setShowSaleForm(false)} label="Registrar venta" /></form></Modal>}</AnimatePresence>
+      <AnimatePresence>{showSaleForm && <Modal title={saleBeingEdited ? 'Editar venta' : 'Registrar venta'} subtitle="La venta se suma al recaudo y a las boletas vendidas." onClose={closeSaleForm}><form onSubmit={saveSale} className="flex flex-col gap-4"><label className="form-label">Vendedor<select required value={saleForm.sellerId} onChange={event => setSaleForm(current => ({ ...current, sellerId: event.target.value }))} className="field">{selectedSellers.map(seller => <option key={seller.id} value={seller.id}>{seller.name}</option>)}</select></label><div className="grid grid-cols-2 gap-3"><label className="form-label">Boletas vendidas<input autoFocus required type="number" min="1" max={selectedRaffle ? selectedRaffle.ticketCount - (selectedStats?.ticketsSold || 0) + (saleBeingEdited?.tickets || 0) : undefined} inputMode="numeric" value={saleForm.tickets} onChange={event => setSaleForm(current => ({ ...current, tickets: event.target.value }))} className="field" placeholder="1" /></label><label className="form-label">Fecha<input required type="date" value={saleForm.date} onChange={event => setSaleForm(current => ({ ...current, date: event.target.value }))} className="field" /></label></div><ModalActions onCancel={closeSaleForm} label={saleBeingEdited ? 'Guardar cambios' : 'Registrar venta'} /></form></Modal>}</AnimatePresence>
+      <AnimatePresence>{salePendingDeletion && <motion.div className="fixed inset-0 z-[86] grid place-items-center bg-[#07050fb8] p-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><motion.div role="alertdialog" aria-modal="true" aria-labelledby="delete-sale-title" className="w-full max-w-sm rounded-3xl border border-danger/30 bg-bg-secondary p-5 shadow-2xl" initial={{ opacity: 0, scale: .96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: .96 }}><span className="grid h-11 w-11 place-items-center rounded-2xl bg-danger-soft text-danger"><Trash2 size={19} /></span><h2 id="delete-sale-title" className="mt-4 text-lg font-bold">¿Eliminar venta?</h2><p className="mt-2 text-sm leading-6 text-text-secondary">Se retirarán {salePendingDeletion.tickets} boletas del recaudo de esta rifa.</p><div className="mt-5 flex gap-2"><button onClick={() => setSalePendingDeletion(null)} className="secondary-button flex-1">Cancelar</button><button onClick={deleteSale} className="danger-button flex-1">Eliminar</button></div></motion.div></motion.div>}</AnimatePresence>
       <AnimatePresence>{rafflePendingDeletion && <motion.div className="fixed inset-0 z-[85] grid place-items-center bg-[#07050fb8] p-4 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><motion.div role="alertdialog" aria-modal="true" aria-labelledby="delete-raffle-title" className="w-full max-w-sm rounded-3xl border border-danger/30 bg-bg-secondary p-5 shadow-2xl" initial={{ opacity: 0, scale: .96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: .96 }}><span className="grid h-11 w-11 place-items-center rounded-2xl bg-danger-soft text-danger"><Trash2 size={19} /></span><h2 id="delete-raffle-title" className="mt-4 text-lg font-bold">¿Eliminar rifa?</h2><p className="mt-2 text-sm leading-6 text-text-secondary">Se eliminarán <b className="text-text-primary">{rafflePendingDeletion.name}</b>, sus vendedores y sus ventas registradas.</p><div className="mt-5 flex gap-2"><button onClick={() => setRafflePendingDeletion(null)} className="secondary-button flex-1">Cancelar</button><button onClick={deleteRaffle} className="danger-button flex-1">Eliminar</button></div></motion.div></motion.div>}</AnimatePresence>
       <style jsx>{`.field { width: 100%; height: 3rem; border-radius: 1rem; border: 1px solid var(--border-subtle); background: var(--bg-primary); padding: 0 1rem; font-size: .875rem; color: var(--text-primary); outline: none; } .field:focus { border-color: var(--accent); }`}</style>
     </div>
