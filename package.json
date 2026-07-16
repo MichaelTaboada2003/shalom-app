@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:migrate": "node scripts/migrate.mjs",
-    "db:seed": "npm run db:migrate && node scripts/seed.mjs"
+    "db:migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

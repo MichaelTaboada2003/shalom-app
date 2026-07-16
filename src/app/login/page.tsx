@@ -10,7 +10,7 @@ import logoShalom from '@/app/assets/logo-shalom.png';
 import { CommunityCharacter, type CharacterProfile } from '@/components/community-character';
 import styles from './login.module.css';
 
-const demoCharacters: CharacterProfile[] = [
+const welcomeCharacters: CharacterProfile[] = [
   { id: 'login-ana', name: 'Ana', avatarStyle: 'lilac', avatarGender: 'woman', avatarSkinTone: 'medium', avatarHairStyle: 'waves' },
   { id: 'login-camila', name: 'Camila', avatarStyle: 'mint', avatarGender: 'woman', avatarSkinTone: 'deep', avatarHairStyle: 'braids' },
   { id: 'login-samuel', name: 'Samuel', avatarStyle: 'sky', avatarGender: 'man', avatarSkinTone: 'tan', avatarHairStyle: 'curls' },
@@ -32,8 +32,6 @@ export default function LoginPage() {
     if (result.error) setError(result.error);
     else router.push('/checklist');
   };
-  const useDemo = () => { setEmail('seed.admin@shalom.test'); setPassword('Shalom2026!'); setError(''); };
-
   return (
     <div className={styles.page}>
       <section className={styles.story} aria-label="Bienvenida a Shalom">
@@ -42,7 +40,7 @@ export default function LoginPage() {
           <h1>Organiza, cuida y celebra a <span>tu comunidad.</span></h1>
           <p>Todo lo importante de Shalom en un mismo lugar: personas, cumpleaños, retiros y un pequeño mundo lleno de vida.</p>
           <div className={styles.features}><span className={styles.feature}><UsersRound size={15} /> Perfiles con historia</span><span className={styles.feature}><Sparkles size={15} /> Mundo interactivo</span><span className={styles.feature}><ShieldCheck size={15} /> Acceso por roles</span></div>
-          <div className={styles.characters} aria-hidden="true">{demoCharacters.map(profile => <CommunityCharacter key={profile.id} profile={profile} size="hero" />)}</div>
+          <div className={styles.characters} aria-hidden="true">{welcomeCharacters.map(profile => <CommunityCharacter key={profile.id} profile={profile} size="hero" />)}</div>
         </div>
       </section>
       <main className={styles.loginSide}>
@@ -55,7 +53,6 @@ export default function LoginPage() {
             <label className={styles.field}>Contraseña<span className={styles.inputWrap}><Lock size={16} /><input type={showPassword ? 'text' : 'password'} value={password} onChange={event => setPassword(event.target.value)} placeholder="Tu contraseña" autoComplete="current-password" required /><button type="button" onClick={() => setShowPassword(current => !current)} className={styles.passwordToggle} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
             <button type="submit" disabled={submitting} className={styles.submit}>{submitting ? <span className={styles.spinner} /> : <><LogIn size={17} /> Entrar a Shalom</>}</button>
           </form>
-          <button type="button" onClick={useDemo} className={styles.demo}><Sparkles size={15} /> Usar cuenta demo</button>
           <p className={styles.safe}><ShieldCheck size={12} /> Tus datos viajan protegidos y tu sesión es privada.</p>
         </motion.div>
       </main>

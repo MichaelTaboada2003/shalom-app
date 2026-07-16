@@ -158,21 +158,3 @@ CRON_SECRET=un-secreto-largo-y-aleatorio
 ```
 
 `vercel.json` programa `/api/reminders/dispatch` todos los días a las 12:00 UTC. El endpoint exige `Authorization: Bearer $CRON_SECRET`, y guarda un registro único por recordatorio, año y destinatario para evitar duplicados. Si no se usa Vercel, programa una petición `GET` o `POST` autenticada al mismo endpoint cada día.
-
-### Datos de prueba
-
-Para cargar datos demo (usuarios, integrantes, checklists y recordatorios) ejecuta:
-
-```bash
-npm run db:seed
-```
-
-El seed es idempotente: no duplica registros al ejecutarse varias veces. Crea estas cuentas de prueba, todas con la contraseña `Shalom2026!` (puedes cambiarla con `SEED_ADMIN_PASSWORD`):
-
-| Rol | Correo |
-|---|---|
-| Admin | `seed.admin@shalom.test` |
-| Líder | `seed.leader@shalom.test` |
-| Miembro | `seed.member@shalom.test` |
-
-Son datos ficticios con dominios `.test`; no se envían correos reales.
