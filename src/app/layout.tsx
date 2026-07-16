@@ -57,7 +57,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
           <button onClick={async () => { await logout(); router.push('/login'); }} className="icon-button" aria-label="Cerrar sesión"><LogOut size={17} /></button>
         </div>
       </header>
-      <main id="main-content" className="app-main relative z-10 flex-1 overflow-y-auto">{children}</main>
+      <main id="main-content" className="app-main relative flex-1 overflow-y-auto">{children}</main>
       <nav aria-label="Navegación principal" className="app-nav">
         {navItems.map(({ href, label, Icon }) => {
           const isActive = pathname.startsWith(href);
