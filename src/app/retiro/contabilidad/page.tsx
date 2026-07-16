@@ -33,7 +33,12 @@ function writeStorage<T>(key: string, value: T[]) { localStorage.setItem(key, JS
 function persistRetreat(scope: string, data: unknown[]) { return fetch('/api/retreat', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scope, data }) }); }
 function today() { return new Date().toISOString().slice(0, 10); }
 function formatMoney(value: number) { return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value); }
-function formatDate(value: string) { return new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`)); }
+function formatDate(value: string) {
+  const date = new Date(`${String(value).slice(0, 10)}T00:00:00Z`);
+  return Number.isNaN(date.getTime())
+    ? 'Fecha sin registrar'
+    : new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(date);
+}
 
 export default function ContabilidadPage() {
   const router = useRouter();

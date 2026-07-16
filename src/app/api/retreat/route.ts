@@ -11,11 +11,11 @@ export async function GET() {
     await requireAuth();
     const sql = getDb();
     const [activities, movements, raffles, sellers, sales] = await Promise.all([
-      sql`SELECT id, name, description, component, created_at AS "createdAt" FROM retreat_activities ORDER BY created_at DESC`,
-      sql`SELECT id, activity_id AS "activityId", type, concept, category, amount::float AS amount, movement_date AS date, note FROM retreat_movements ORDER BY movement_date DESC, created_at DESC`,
-      sql`SELECT id, activity_id AS "activityId", name, prize, goal::float AS goal, ticket_price::float AS "ticketPrice", ticket_count AS "ticketCount", draw_date AS "drawDate", status, completed_at AS "completedAt", settlement_movement_id AS "settlementMovementId", created_at AS "createdAt" FROM retreat_raffles ORDER BY created_at DESC`,
+      sql`SELECT id, name, description, component, created_at::text AS "createdAt" FROM retreat_activities ORDER BY created_at DESC`,
+      sql`SELECT id, activity_id AS "activityId", type, concept, category, amount::float AS amount, movement_date::text AS date, note FROM retreat_movements ORDER BY movement_date DESC, created_at DESC`,
+      sql`SELECT id, activity_id AS "activityId", name, prize, goal::float AS goal, ticket_price::float AS "ticketPrice", ticket_count AS "ticketCount", draw_date::text AS "drawDate", status, completed_at::text AS "completedAt", settlement_movement_id AS "settlementMovementId", created_at::text AS "createdAt" FROM retreat_raffles ORDER BY created_at DESC`,
       sql`SELECT id, raffle_id AS "raffleId", name, phone FROM retreat_raffle_sellers ORDER BY created_at DESC`,
-      sql`SELECT id, raffle_id AS "raffleId", seller_id AS "sellerId", tickets, sale_date AS date FROM retreat_raffle_sales ORDER BY sale_date DESC, created_at DESC`,
+      sql`SELECT id, raffle_id AS "raffleId", seller_id AS "sellerId", tickets, sale_date::text AS date FROM retreat_raffle_sales ORDER BY sale_date DESC, created_at DESC`,
     ]);
     return NextResponse.json({ activities, movements, raffles, sellers, sales });
   } catch (error) { return fail(error); }
