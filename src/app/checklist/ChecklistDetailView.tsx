@@ -16,13 +16,37 @@ interface ChecklistItem {
   parent_id: string | null;
 }
 
+interface ChecklistDetail {
+  id: string;
+  title: string;
+  emoji: string;
+  created_at: string;
+  total_items: number;
+  completed_items: number;
+  visibility: 'community' | 'personal';
+  owner_id: string | null;
+  items: ChecklistItem[];
+}
+
 interface ChecklistDetailProps {
-  activeList: any;
-  setActiveList: (list: any) => void;
+  activeList: ChecklistDetail;
+  setActiveList: React.Dispatch<React.SetStateAction<ChecklistDetail | null>>;
   fetchChecklists: () => void;
 }
 
-function SortableItem({ item, toggleItem, deleteItem, indent = 0, updateItemText, onAddSubItem, hasChildren, isExpanded, onToggleExpand }: any) {
+interface SortableItemProps {
+  item: ChecklistItem;
+  toggleItem: (item: ChecklistItem) => void;
+  deleteItem: (id: string) => void;
+  indent?: number;
+  updateItemText: (id: string, text: string) => void;
+  onAddSubItem: (id: string) => void;
+  hasChildren: boolean;
+  isExpanded: boolean;
+  onToggleExpand: (id: string) => void;
+}
+
+function SortableItem({ item, toggleItem, deleteItem, indent = 0, updateItemText, onAddSubItem, hasChildren, isExpanded, onToggleExpand }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
@@ -135,7 +159,7 @@ export function ChecklistDetailView({ activeList, setActiveList, fetchChecklists
   const addItem = async (parentId: string | null = null, text: string) => {
     if (!text.trim()) return;
     
-    const tempId = `temp-${Date.now()}`;
+    const tempId = `temp-${crypto.randomUUID()}`;
     const newItem: ChecklistItem = {
       id: tempId,
       text: text.trim(),

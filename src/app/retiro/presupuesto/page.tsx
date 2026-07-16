@@ -56,7 +56,11 @@ export default function PresupuestoPage() {
   const [showReset, setShowReset] = useState(false);
   const addInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { setItems(load()); }, []);
+  useEffect(() => {
+    // localStorage is only available after client hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setItems(load());
+  }, []);
   useEffect(() => { if (items.length > 0) save(items); }, [items]);
 
   const update = useCallback((id: string, field: keyof BudgetItem, value: string | number) => {

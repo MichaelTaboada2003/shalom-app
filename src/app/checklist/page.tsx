@@ -12,6 +12,7 @@ interface ChecklistItem {
   text: string;
   completed: boolean;
   position: number;
+  parent_id: string | null;
 }
 
 interface ChecklistSummary {
